@@ -36,7 +36,11 @@ RUN set -eux; \
         libva-nvidia-driver \
         nvidia-settings \
         kernel-devel-"${KVER}" kernel-headers \
-        gcc make kmodtool; \
+        gcc make kmodtool \
+      || true; \
+    # o %post do akmod-nvidia tenta compilar como root e falha (não-crítico);
+    # ignoramos esse código de saída, mas confirmamos que os pacotes instalaram mesmo
+    rpm -q akmod-nvidia "kernel-devel-${KVER}"; \
     SRPM="$(ls /usr/src/akmods/nvidia-kmod-*.src.rpm | head -n1)"; \
     install -d -o akmods -g akmods /tmp/akbuild; \
     runuser -u akmods -- akmodsbuild --kernels "${KVER}" --outputdir /tmp/akbuild "${SRPM}"; \
