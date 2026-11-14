@@ -1,0 +1,65 @@
+# Capix Linux OS — variante com driver NVIDIA proprietário embutido (capix-nvidia)
+#
+# Por que uma imagem separada: o sistema base do Capix é somente-leitura, então o
+# driver da NVIDIA precisa estar DENTRO da imagem (não dá para "instalar depois" como
+# num Linux comum). Esta imagem parte da imagem base do Capix e adiciona o driver,
+# compilado contra o kernel que está na imagem. Placas AMD e Intel não precisam disto.
+#
+# Build:
+#   podman build -f Containerfile -t localhost/capix:44 .            # base (AMD/Intel)
+#   podman build -f Containerfile.nvidia -t localhost/capix-nvidia:44 \
+#                --build-arg BASE=localhost/capix:44 .
+# ou pelo build.sh:  CAPIX_GPU=nvidia ./build.sh iso
+ARG FEDORA_VERSION=44
+ARG BASE=localhost/capix:${FEDORA_VERSION}
+FROM ${BASE}
+ARG FEDORA_VERSION=44
+
+LABEL org.opencontainers.image.title="Capix Linux OS (NVIDIA)" \
+      org.opencontainers.image.description="Capix com driver NVIDIA proprietário embutido"
+
+# RPM Fusion (livre e não-livre) — origem oficial do driver NVIDIA no Fedora
+RUN dnf -y install \
+        https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm \
+        https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA_VERSION}.noarch.rpm \
+    && dnf clean all
+
+# Driver NVIDIA + aceleração de vídeo e suporte 32 bits (jogos/Proton).
+# akmods compila o módulo para o kernel desta imagem, já na hora do build.
+RUN set -eux; \
+    KVER="$(ls /usr/lib/modules | sort -V | tail -n1)"; \
+    dnf -y install \
+        akmod-nvidia xorg-x11-drv-nvidia-cuda \
+        xorg-x11-drv-nvidia-cuda-libs xorg-x11-drv-nvidia-libs.i686 \
+        nvidia-vaapi-driver libva-nvidia-driver \
+        nvidia-settings \
+        kernel-devel-"${KVER}" kernel-headers; \
+    akmods --force --kernels "${KVER}"; \
+    # confirma que o módulo foi mesmo compilado (senão, falha o build em vez de gerar imagem quebrada)
+    modinfo -k "${KVER}" nvidia >/dev/null; \
+    dnf clean all
+
+# Carrega o driver no boot, impede o nouveau e habilita o KMS (necessário no Wayland/Plasma)
+RUN set -eux; \
+    printf '%s\n' \
+      'blacklist nouveau' \
+      'options nouveau modeset=0' > /usr/lib/modprobe.d/capix-nvidia-blacklist.conf; \
+    printf '%s\n' \
+      'options nvidia-drm modeset=1 fbdev=1' \
+      'options nvidia NVreg_PreserveVideoMemoryAllocations=1' > /usr/lib/modprobe.d/capix-nvidia.conf; \
+    printf '%s\n' nvidia nvidia_modeset nvidia_uvm nvidia_drm > /usr/lib/modules-load.d/capix-nvidia.conf; \
+    # preserva a memória da GPU ao suspender (evita telas corrompidas ao voltar)
+    systemctl enable nvidia-suspend.service nvidia-resume.service nvidia-hibernate.service nvidia-persistenced.service 2>/dev/null || true; \
+    # marca a variante para a Capix Central reconhecer
+    mkdir -p /usr/share/capix; echo nvidia > /usr/share/capix/gpu-variant; \
+    sed -i 's/^PRETTY_NAME=.*/PRETTY_NAME="Capix Linux OS '"${FEDORA_VERSION}"' (NVIDIA)"/' /usr/lib/os-release
+
+# Regenera o initramfs com os módulos da NVIDIA (para o KMS já valer no boot)
+RUN set -eux; \
+    KVER="$(ls /usr/lib/modules | sort -V | tail -n1)"; \
+    dracut --no-hostonly --kver "${KVER}" --reproducible --zstd \
+           --add ostree --add-drivers "nvidia nvidia_modeset nvidia_uvm nvidia_drm" \
+           -f "/usr/lib/modules/${KVER}/initramfs.img"; \
+    chmod 0600 "/usr/lib/modules/${KVER}/initramfs.img"
+
+RUN bootc container lint

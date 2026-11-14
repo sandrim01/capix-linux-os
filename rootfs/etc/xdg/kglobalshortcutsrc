@@ -1,0 +1,6 @@
+# Atalhos no estilo Windows 10 que o Plasma ainda não tem por padrão
+[services][capix-central.desktop]
+_launch=Meta+I
+
+[services][org.kde.konsole.desktop]
+_launch=Ctrl+Alt+T

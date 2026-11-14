@@ -1,0 +1,110 @@
+# Capix Linux OS — splash de boot (Plymouth, plugin "script")
+# A própria logo (capivara + "Capix LINUX OS") mastigando um matinho + spinner estilo Windows 10.
+
+Window.SetBackgroundTopColor(1, 1, 1);      # fundo branco, igual ao da logo
+Window.SetBackgroundBottomColor(1, 1, 1);
+
+NFRAMES = 24;
+for (i = 0; i < NFRAMES; i++)
+  frame[i] = Image("capy-" + i + ".png");
+
+cx = Window.GetX() + Window.GetWidth() / 2;
+cy = Window.GetY() + Window.GetHeight() / 2;
+
+capy = Sprite(frame[0]);
+capy.SetX(cx - frame[0].GetWidth() / 2);
+capy.SetY(cy - frame[0].GetHeight() / 2 - 40);
+capy.SetZ(10);
+
+# marca d'água da desenvolvedora
+wm_image = Image("watermark.png");
+wm = Sprite(wm_image);
+wm.SetX(cx - wm_image.GetWidth() / 2);
+wm.SetY(Window.GetY() + Window.GetHeight() - wm_image.GetHeight() - 28);
+wm.SetZ(5);
+
+dot_image = Image("dot.png");
+NDOTS = 5;
+for (d = 0; d < NDOTS; d++) {
+  dot[d] = Sprite(dot_image);
+  dot[d].SetZ(10);
+  dot[d].SetOpacity(0);
+}
+spin_y = capy.GetY() + frame[0].GetHeight() + 60;
+RADIUS = 20;
+
+tick = 0;
+fun refresh_callback () {
+  tick++;
+  # 50 Hz / 3 = ~16 quadros por segundo -> 1,5 s por ciclo de mastigada
+  capy.SetImage(frame[Math.Int(tick / 3) % NFRAMES]);
+
+  for (d = 0; d < NDOTS; d++) {
+    t = ((tick + 10000 - d * 6) % 210) / 210;          # 0..1, ciclo de 4,2 s
+    if (t < 0.78) {
+      u = t / 0.78;
+      # aceleração/desaceleração parecida com o spinner do Windows 10
+      a = Math.Pi * 2 * (u * 2) - Math.Sin(u * Math.Pi * 4) * 0.55 + Math.Pi * 1.25;
+      dot[d].SetX(cx + RADIUS * Math.Sin(a) - dot_image.GetWidth() / 2);
+      dot[d].SetY(spin_y - RADIUS * Math.Cos(a) - dot_image.GetHeight() / 2);
+      dot[d].SetOpacity(1);
+    } else {
+      dot[d].SetOpacity(0);
+    }
+  }
+}
+Plymouth.SetRefreshFunction(refresh_callback);
+
+# ---------- Senha de disco criptografado (LUKS) ----------
+entry_image = Image("entry.png");
+bullet_image = Image("bullet.png");
+entry = Sprite(entry_image);
+entry.SetX(cx - entry_image.GetWidth() / 2);
+entry.SetY(spin_y - entry_image.GetHeight() / 2);
+entry.SetZ(20);
+entry.SetOpacity(0);
+prompt_sprite = Sprite();
+prompt_sprite.SetZ(20);
+
+fun hide_dots () {
+  for (d = 0; d < NDOTS; d++) dot[d].SetOpacity(0);
+}
+
+fun display_password_callback (prompt, bullets) {
+  entry.SetOpacity(1);
+  prompt_image = Image.Text(prompt, 0.353, 0.243, 0.180);
+  prompt_sprite.SetImage(prompt_image);
+  prompt_sprite.SetX(cx - prompt_image.GetWidth() / 2);
+  prompt_sprite.SetY(entry.GetY() - prompt_image.GetHeight() - 10);
+  prompt_sprite.SetOpacity(1);
+  for (i = 0; bullet_sprite[i]; i++) bullet_sprite[i].SetOpacity(0);
+  for (i = 0; i < bullets && i < 22; i++) {
+    if (!bullet_sprite[i]) bullet_sprite[i] = Sprite(bullet_image);
+    bullet_sprite[i].SetX(entry.GetX() + 14 + i * (bullet_image.GetWidth() + 1));
+    bullet_sprite[i].SetY(entry.GetY() + entry_image.GetHeight() / 2 - bullet_image.GetHeight() / 2);
+    bullet_sprite[i].SetZ(21);
+    bullet_sprite[i].SetOpacity(1);
+  }
+  NDOTS = 0;   # esconde o spinner enquanto pede a senha
+  hide_dots();
+}
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+
+fun display_normal_callback () {
+  entry.SetOpacity(0);
+  prompt_sprite.SetOpacity(0);
+  for (i = 0; bullet_sprite[i]; i++) bullet_sprite[i].SetOpacity(0);
+  NDOTS = 5;
+}
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+
+# Mensagens do sistema (ex.: "Aplicando atualização…")
+message_sprite = Sprite();
+message_sprite.SetZ(20);
+fun message_callback (text) {
+  img = Image.Text(text, 0.353, 0.243, 0.180);
+  message_sprite.SetImage(img);
+  message_sprite.SetX(cx - img.GetWidth() / 2);
+  message_sprite.SetY(Window.GetY() + Window.GetHeight() * 0.9);
+}
+Plymouth.SetMessageFunction(message_callback);

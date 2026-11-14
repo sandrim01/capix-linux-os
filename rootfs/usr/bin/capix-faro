@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Abre o Capix Faro (OSINT de infraestrutura e ameaças)
+exec /usr/bin/python3 /usr/libexec/capix/faro-server.py "$@"

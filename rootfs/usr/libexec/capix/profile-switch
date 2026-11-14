@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+"""
+Capix — troca de perfil de trabalho (nível de usuário; a VPN passa pelo capix-admin via pkexec).
+
+  profile-switch investigacao   liga a VPN escolhida e abre as ferramentas marcadas
+  profile-switch pessoal        desliga a VPN e volta ao normal
+
+Config: ~/.config/capix/profiles.json  {"vpn": "Nome da VPN", "abrir": ["faro", "keepass", "descartavel"]}
+Se há VPN configurada e ela não conecta, as ferramentas NÃO são abertas (falha fechada).
+"""
+import json, os, subprocess, sys
+
+HOME = os.path.expanduser("~")
+CFG = os.path.join(HOME, ".config/capix/profiles.json")
+FLAG = os.path.join(HOME, ".config/capix/profile-active")
+ADMIN = "/usr/libexec/capix/capix-admin"
+TOOLS = {
+    "faro": ["capix-faro"],
+    "keepass": ["flatpak", "run", "org.keepassxc.KeePassXC"],
+    "descartavel": ["capix-navegador-descartavel"],
+    "tor": ["flatpak", "run", "org.torproject.torbrowser-launcher"],
+}
+
+
+def cfg():
+    try:
+        return json.load(open(CFG))
+    except Exception:
+        return {}
+
+
+def main():
+    mode = sys.argv[1] if len(sys.argv) > 1 else ""
+    c = cfg()
+    vpn = str(c.get("vpn", ""))
+    if mode == "investigacao":
+        if vpn:
+            print(f"Ligando a VPN {vpn}…", flush=True)
+            if subprocess.run(["pkexec", ADMIN, "vpn-up", vpn]).returncode != 0:
+                sys.exit("erro: a VPN não conectou; as ferramentas não foram abertas.")
+        for item in c.get("abrir", ["faro"]):
+            if item in TOOLS:
+                print(f"Abrindo {item}…", flush=True)
+                try:
+                    subprocess.Popen(TOOLS[item], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                except FileNotFoundError:
+                    print(f"({item} não está instalado)")
+        os.makedirs(os.path.dirname(FLAG), exist_ok=True)
+        open(FLAG, "w").write("investigacao")
+        print("Modo investigação ativo.")
+    elif mode == "pessoal":
+        if vpn:
+            subprocess.run(["pkexec", ADMIN, "vpn-down", vpn])
+        if os.path.exists(FLAG):
+            os.remove(FLAG)
+        print("De volta ao modo pessoal.")
+    else:
+        sys.exit("uso: profile-switch investigacao|pessoal")
+
+
+if __name__ == "__main__":
+    main()

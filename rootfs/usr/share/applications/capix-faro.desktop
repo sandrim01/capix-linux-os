@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Capix Faro
+GenericName=OSINT
+Comment=Investigue domínios, IPs, links, arquivos e e-mails suspeitos
+Exec=capix-faro
+Icon=capix-start
+Categories=Network;Security;Utility;
+Keywords=osint;dns;whois;rdap;ip;phishing;ioc;hash;malware;investigação;segurança;
+StartupWMClass=CapixFaro

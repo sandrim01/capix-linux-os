@@ -1,0 +1,3 @@
+.pragma library
+// gerado por tools/render-assets.mjs: [x, y, largura, altura] no desenho 208x269
+var box = {"base": [24.0, 31.0, 161.333, 238.0], "head": [49.667, 28.667, 109.667, 100.667], "cup": [26.667, 129.0, 62.0, 41.667]};

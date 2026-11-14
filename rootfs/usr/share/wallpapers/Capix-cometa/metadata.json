@@ -1,0 +1,12 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "UnbugSTI (UnbugSolutions-TI)"
+            }
+        ],
+        "Id": "Capix-cometa",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Capix — Noite do cometa"
+    }
+}

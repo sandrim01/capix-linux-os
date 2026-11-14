@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Capix Gamer (modo console)
+Comment=Entra direto na tela de jogos da Steam, em tela cheia, como num console
+Exec=/usr/libexec/capix/gamer-session

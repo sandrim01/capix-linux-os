@@ -1,0 +1,26 @@
+# Apps recomendados do Capix (Flathub)
+# id | nome | descrição | categoria | instalar no 1º boot (1/0)
+org.libreoffice.LibreOffice | LibreOffice | Documentos, planilhas e apresentações, compatível com Office | Produtividade | 1
+org.videolan.VLC | VLC | Toca qualquer vídeo e música | Multimídia | 1
+org.gnome.Loupe | Visualizador de imagens | Abre e organiza fotos | Multimídia | 0
+org.kde.okular | Okular | Leitor de PDF com anotações | Produtividade | 1
+com.jeffser.Alpaca | Alpaca (Assistente de IA) | IA que roda no seu computador, sem enviar dados para a nuvem | Assistente de IA | 0
+org.gimp.GIMP | GIMP | Edição de imagens | Criação | 0
+org.kde.kdenlive | Kdenlive | Edição de vídeo | Criação | 0
+com.spotify.Client | Spotify | Música em streaming | Multimídia | 0
+org.telegram.desktop | Telegram | Mensagens | Comunicação | 0
+# --- Jogos (página Modo Gamer) ---
+com.valvesoftware.Steam | Steam | A maior loja de jogos do PC; roda jogos de Windows com o Proton | Jogos | 0
+com.heroicgameslauncher.hgl | Heroic Games Launcher | Seus jogos da Epic Games, GOG e Amazon Prime Gaming | Jogos | 0
+net.lutris.Lutris | Lutris | Organiza jogos de várias lojas e emuladores num só lugar | Jogos | 0
+com.usebottles.bottles | Bottles | Roda jogos e programas de Windows | Jogos | 0
+org.libretro.RetroArch | RetroArch | Emuladores de consoles clássicos (Nintendo, Sega, PlayStation e mais) | Jogos | 0
+org.prismlauncher.PrismLauncher | Prism Launcher | Minecraft Java com mods e várias instâncias | Jogos | 0
+org.vinegarhq.Sober | Sober | Roblox | Jogos | 0
+com.discordapp.Discord | Discord | Voz e chat com os amigos enquanto joga | Jogos | 0
+net.davidotek.pupgui2 | ProtonUp-Qt | Instala versões extras do Proton/Wine para mais compatibilidade | Jogos | 0
+# --- Privacidade e segurança (página Privacidade) ---
+org.keepassxc.KeePassXC | KeePassXC | Cofre de senhas que fica só no seu computador | Privacidade | 0
+com.bitwarden.desktop | Bitwarden | Cofre de senhas com sincronização | Privacidade | 0
+org.torproject.torbrowser-launcher | Tor Browser | Navegação anônima pela rede Tor | Privacidade | 0
+org.gnome.World.Secrets | Secrets | Cofre de senhas simples (formato KeePass) | Privacidade | 0

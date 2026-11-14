@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Escolhe uma imagem do usuário e aplica como papel de parede
+set -euo pipefail
+f="$(kdialog --title 'Escolha um papel de parede' --getopenfilename "$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME")" 'image/png image/jpeg image/webp image/svg+xml')" || exit 0
+[ -n "$f" ] && plasma-apply-wallpaperimage "$f"

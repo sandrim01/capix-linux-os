@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Apaga um arquivo com sobrescrita (não dá para recuperar). Nível de usuário.
+set -euo pipefail
+f="$(kdialog --title 'Triturar arquivo (apagar sem recuperação)' --getopenfilename "$HOME")" || exit 0
+[ -z "$f" ] && exit 0
+kdialog --warningcontinuecancel "Apagar para sempre, sem chance de recuperar?\n\n$f" || exit 0
+shred -u -z -n 3 "$f" && kdialog --msgbox "Arquivo triturado com segurança."

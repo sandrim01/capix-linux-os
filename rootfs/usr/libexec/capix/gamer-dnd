@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Liga/desliga o "Não perturbe" enquanto o modo gamer está ativo.
+A inibição de notificações vale enquanto a conexão D-Bus que a pediu existir,
+então "on" deixa um processinho em segundo plano segurando-a; "off" encerra esse processo."""
+import os, signal, sys, time
+PIDF = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "capix-gamer-dnd.pid")
+
+def stop():
+    try:
+        os.kill(int(open(PIDF).read()), signal.SIGTERM)
+    except Exception:
+        pass
+    try:
+        os.remove(PIDF)
+    except FileNotFoundError:
+        pass
+
+if len(sys.argv) < 2 or sys.argv[1] not in ("on", "off"):
+    sys.exit("uso: gamer-dnd on|off")
+stop()
+if sys.argv[1] == "on":
+    if os.fork():
+        sys.exit(0)
+    os.setsid()
+    with open(PIDF, "w") as f:
+        f.write(str(os.getpid()))
+    try:
+        import dbus
+        bus = dbus.SessionBus()
+        n = dbus.Interface(bus.get_object("org.freedesktop.Notifications", "/org/freedesktop/Notifications"),
+                           "org.freedesktop.Notifications")
+        n.Inhibit("capix-central", "Modo gamer", {})
+    except Exception as e:
+        print(f"não foi possível ativar o Não perturbe: {e}", file=sys.stderr)
+    while True:
+        time.sleep(3600)

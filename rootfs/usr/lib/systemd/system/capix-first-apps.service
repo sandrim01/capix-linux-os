@@ -1,0 +1,16 @@
+[Unit]
+Description=Capix: instala os apps padrão (Flathub) no primeiro boot
+Wants=network-online.target
+After=network-online.target capix-flathub.service
+Requires=capix-flathub.service
+ConditionPathExists=!/var/lib/capix/first-apps-ok
+
+[Service]
+Type=oneshot
+Nice=10
+ExecStart=/usr/libexec/capix/first-apps
+Restart=on-failure
+RestartSec=5min
+
+[Install]
+WantedBy=multi-user.target

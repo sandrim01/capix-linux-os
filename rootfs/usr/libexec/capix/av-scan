@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Verificação de antivírus (ClamAV) das pastas pessoais; grava o resultado para a Capix Central.
+set -uo pipefail
+out=/var/lib/capix/av-last.json; log=/var/lib/capix/av-last.log
+mkdir -p /var/lib/capix
+nice -n 19 ionice -c3 clamscan --recursive --infected --exclude-dir='^/home/[^/]+/\.local/share/(waydroid|flatpak)' \
+  --exclude-dir='^/var/home/[^/]+/\.local/share/(waydroid|flatpak)' /var/home /home >"$log" 2>&1
+scanned=$(awk -F': ' '/^Scanned files/ {print $2}' "$log"); infected=$(awk -F': ' '/^Infected files/ {print $2}' "$log")
+printf '{"last": "%s", "scanned": %d, "infected": %d}\n' "$(date '+%Y-%m-%d %H:%M')" "${scanned:-0}" "${infected:-0}" >"$out"
+if [ "${infected:-0}" -gt 0 ]; then
+  # avisa os usuários logados
+  for u in $(loginctl list-users --no-legend | awk '{print $2}'); do
+    uid=$(id -u "$u"); sudo -u "$u" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$uid/bus" \
+      notify-send -a "Capix" -i dialog-warning "Ameaça encontrada" "O antivírus encontrou $infected arquivo(s) suspeito(s). Abra a Capix Central → Segurança." || true
+  done
+fi
+exit 0

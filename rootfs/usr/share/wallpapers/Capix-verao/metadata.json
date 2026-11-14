@@ -1,0 +1,12 @@
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "UnbugSTI (UnbugSolutions-TI)"
+            }
+        ],
+        "Id": "Capix-verao",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Capix — Tarde de verão"
+    }
+}

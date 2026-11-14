@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "KPlugin": {
+        "Authors": [{ "Name": "UnbugSTI (UnbugSolutions-TI)" }],
+        "Category": "",
+        "Description": "Área de trabalho do Capix: barra de tarefas e menu Iniciar no estilo Windows 10",
+        "Id": "org.capix.desktop",
+        "License": "GPL-3.0-or-later",
+        "Name": "Capix",
+        "Version": "1.0"
+    },
+    "X-Plasma-APIVersion": "2"
+}

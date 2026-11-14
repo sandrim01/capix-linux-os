@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Bem-vindo ao Capix
+Comment=Assistente de primeiros passos
+Exec=capix-central --welcome
+Icon=capix-start
+Categories=System;
+StartupWMClass=CapixCentral

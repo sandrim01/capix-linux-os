@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""
+Capix — detecta as placas de vídeo e o estado dos drivers (só stdlib, sem root).
+Usado pela página "Placa de vídeo" da Capix Central. Imprime um JSON.
+"""
+import glob, json, os, re, shutil, subprocess
+
+VENDOR = {"0x1002": "AMD", "0x10de": "NVIDIA", "0x8086": "Intel", "0x1a03": "ASPEED", "0x15ad": "VMware", "0x1af4": "Virtio"}
+
+
+def rd(p, d=""):
+    try:
+        return open(p).read().strip()
+    except Exception:
+        return d
+
+
+def run(cmd, timeout=5):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout).stdout
+    except Exception:
+        return ""
+
+
+def pci_name(slot):
+    # nome legível da placa (lspci), se disponível
+    out = run(["lspci", "-s", slot])
+    m = re.search(r":\s*(.+)$", out.strip())
+    return m.group(1) if m else ""
+
+
+def gpus():
+    found = []
+    for drm in sorted(glob.glob("/sys/class/drm/card[0-9]")):
+        dev = os.path.join(drm, "device")
+        vendor = rd(f"{dev}/vendor")
+        if not vendor or vendor not in VENDOR and not vendor.startswith("0x"):
+            continue
+        slot = os.path.basename(os.path.realpath(dev))
+        drivers = os.path.basename(os.path.realpath(f"{dev}/driver")) if os.path.exists(f"{dev}/driver") else ""
+        g = {"vendor": VENDOR.get(vendor, vendor), "slot": slot, "driver": drivers,
+             "name": pci_name(slot) or VENDOR.get(vendor, "Placa de vídeo"),
+             "render": os.path.basename(glob.glob(f"{dev}/drm/renderD*")[0]) if glob.glob(f"{dev}/drm/renderD*") else ""}
+        found.append(g)
+    return found
+
+
+def main():
+    variant = rd("/usr/share/capix/gpu-variant", "open")
+    g = gpus()
+    vendors = {x["vendor"] for x in g}
+    out = {"variante": variant, "gpus": g, "vulkan": [], "vaapi": "", "nvidia": None, "recomendacao": None}
+
+    # Vulkan: quais placas o sistema enxerga para jogos
+    if shutil.which("vulkaninfo"):
+        vk = run(["vulkaninfo", "--summary"], timeout=8)
+        out["vulkan"] = re.findall(r"deviceName\s*=\s*(.+)", vk)[:4]
+    # Decodificação de vídeo por hardware
+    if shutil.which("vainfo"):
+        va = run(["vainfo"], timeout=8)
+        m = re.search(r"Driver version:\s*(.+)", va)
+        out["vaapi"] = (m.group(1).strip() if m else "") if "VAProfile" in va else ""
+
+    # NVIDIA: driver carregado?
+    if "NVIDIA" in vendors:
+        loaded = os.path.exists("/sys/module/nvidia")
+        info = {"driver_carregado": loaded, "nouveau": os.path.exists("/sys/module/nouveau")}
+        if shutil.which("nvidia-smi"):
+            smi = run(["nvidia-smi", "--query-gpu=driver_version,name", "--format=csv,noheader"], timeout=6)
+            if smi.strip():
+                parts = smi.strip().splitlines()[0].split(",")
+                info["versao"] = parts[0].strip()
+        out["nvidia"] = info
+        if variant != "nvidia" and not loaded:
+            out["recomendacao"] = {
+                "nivel": "trocar-imagem",
+                "texto": "Esta máquina tem uma placa NVIDIA, mas o sistema está na imagem aberta (sem o driver proprietário). "
+                         "Para melhor desempenho em jogos e aplicativos 3D, troque para a imagem com driver NVIDIA.",
+                "comando": "sudo bootc switch ghcr.io/SEU_USUARIO/capix-nvidia:44",
+            }
+    elif variant == "nvidia":
+        out["recomendacao"] = {
+            "nivel": "aviso",
+            "texto": "O sistema está na imagem com driver NVIDIA, mas nenhuma placa NVIDIA foi detectada. "
+                     "Numa máquina só com AMD/Intel, a imagem aberta é mais leve.",
+            "comando": "sudo bootc switch ghcr.io/SEU_USUARIO/capix:44",
+        }
+    print(json.dumps(out, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

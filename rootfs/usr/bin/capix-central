@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Abre a Capix Central (configurações do Capix). Opções: --welcome | --page <id>
+#   --welcome-if-needed : abre o assistente só se ainda não foi concluído (usado no 1º login)
+if [ "${1:-}" = "--welcome-if-needed" ]; then
+  [ -f "$HOME/.config/capix/welcome-done" ] && exit 0
+  set -- --welcome
+fi
+exec /usr/bin/python3 /usr/libexec/capix/central-server.py "$@"

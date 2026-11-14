@@ -1,0 +1,16 @@
+[Unit]
+Description=Capix: adiciona o Flathub como fonte de apps
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=!/var/lib/capix/flathub-ok
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+ExecStart=/usr/bin/mkdir -p /var/lib/capix
+ExecStart=/usr/bin/touch /var/lib/capix/flathub-ok
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=multi-user.target

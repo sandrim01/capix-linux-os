@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""
+Capix — coletor de métricas do computador (só stdlib, sem root).
+Imprime um JSON com o estado atual. Taxas (CPU %, disco/rede por segundo) são calculadas
+comparando com a amostra anterior, guardada em $XDG_RUNTIME_DIR/capix-sysmetrics.json.
+
+Usado pelo widget "Capix Monitor" na área de trabalho.
+"""
+import glob, json, os, shutil, subprocess, time
+
+STATE = os.path.join(os.environ.get("XDG_RUNTIME_DIR") or "/tmp", f"capix-sysmetrics-{os.getuid()}.json")
+
+
+def rd(path, default=""):
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except Exception:
+        return default
+
+
+def num(path, default=None, scale=1.0):
+    v = rd(path)
+    try:
+        return float(v) / scale
+    except ValueError:
+        return default
+
+
+def cpu_times():
+    out = {}
+    for line in rd("/proc/stat").splitlines():
+        if line.startswith("cpu"):
+            p = line.split()
+            vals = list(map(int, p[1:9]))
+            idle = vals[3] + vals[4]
+            out[p[0]] = (sum(vals), idle)
+    return out
+
+
+def temps():
+    """Temperaturas por driver hwmon (coretemp/k10temp = CPU, amdgpu/nvidia = GPU, nvme = SSD)."""
+    res = {}
+    for hw in glob.glob("/sys/class/hwmon/hwmon*"):
+        name = rd(f"{hw}/name")
+        vals = [num(f, scale=1000) for f in glob.glob(f"{hw}/temp*_input")]
+        vals = [v for v in vals if v is not None and 0 < v < 150]
+        if vals:
+            res.setdefault(name, []).append(max(vals))
+    return res
+
+
+def gpu_info(prev, dt, t):
+    gpus = []
+    for card in sorted(glob.glob("/sys/class/drm/card[0-9]")):
+        dev = f"{card}/device"
+        vendor = rd(f"{dev}/vendor")
+        if not vendor:
+            continue
+        g = {"name": {"0x1002": "AMD", "0x8086": "Intel", "0x10de": "NVIDIA"}.get(vendor, "GPU")}
+        busy = num(f"{dev}/gpu_busy_percent")
+        if busy is not None:
+            g["usage"] = busy
+        used, total = num(f"{dev}/mem_info_vram_used"), num(f"{dev}/mem_info_vram_total")
+        if used is not None and total:
+            g["vram_used"], g["vram_total"] = used, total
+        for hw in glob.glob(f"{dev}/hwmon/hwmon*"):
+            tt = num(f"{hw}/temp1_input", scale=1000)
+            if tt:
+                g["temp"] = tt
+            pw = num(f"{hw}/power1_average", scale=1e6) or num(f"{hw}/power1_input", scale=1e6)
+            if pw:
+                g["power"] = pw
+        freq = rd(f"{dev}/pp_dpm_sclk")
+        for line in freq.splitlines():
+            if line.endswith("*"):
+                g["freq"] = float(line.split()[1].rstrip("Mhz*"))
+        # Intel: frequência atual pelo i915/xe
+        f_act = num(f"{card}/gt_act_freq_mhz") or num(f"{card}/gt/gt0/rps_act_freq_mhz")
+        if f_act and "freq" not in g:
+            g["freq"] = f_act
+            fmax = num(f"{card}/gt_max_freq_mhz") or num(f"{card}/gt/gt0/rps_max_freq_mhz")
+            if fmax and "usage" not in g:
+                g["usage"] = min(100.0, f_act / fmax * 100)   # aproximação para Intel
+        if vendor == "0x10de" and shutil.which("nvidia-smi"):
+            try:
+                o = subprocess.run(["nvidia-smi", "--query-gpu=name,utilization.gpu,temperature.gpu,memory.used,memory.total,power.draw,clocks.gr",
+                                    "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=2).stdout.splitlines()[0]
+                n, u, tt, mu, mt, pw, fr = [x.strip() for x in o.split(",")]
+                g.update(name=n, usage=float(u), temp=float(tt), vram_used=float(mu) * 2**20, vram_total=float(mt) * 2**20)
+                try:
+                    g["power"], g["freq"] = float(pw), float(fr)
+                except ValueError:
+                    pass
+            except Exception:
+                pass
+        if vendor in ("0x1002", "0x8086", "0x10de") and len(g) > 1:
+            gpus.append(g)
+    return gpus
+
+
+def disks():
+    seen, out = set(), []
+    for line in rd("/proc/mounts").splitlines():
+        dev, mnt, fs = line.split()[:3]
+        if not dev.startswith("/dev/") or fs in ("squashfs", "iso9660") or "/loop" in dev:
+            continue
+        if mnt.startswith(("/boot", "/sysroot/ostree", "/run", "/snap")) or mnt in ("/usr", "/etc"):
+            continue
+        key = os.path.realpath(dev)
+        if key in seen:
+            continue
+        seen.add(key)
+        try:
+            st = os.statvfs(mnt)
+        except OSError:
+            continue
+        total = st.f_blocks * st.f_frsize
+        if total < 1e9:
+            continue
+        free = st.f_bavail * st.f_frsize
+        out.append({"mount": mnt, "total": total, "used": total - free})
+    return out
+
+
+def diskio():
+    rd_b = wr_b = 0
+    for line in rd("/proc/diskstats").splitlines():
+        p = line.split()
+        name = p[2]
+        if name.startswith(("loop", "ram", "zram", "dm-", "sr")) or (name[-1].isdigit() and not name.startswith("nvme") and not name.startswith("mmcblk")):
+            continue
+        if (name.startswith("nvme") or name.startswith("mmcblk")) and "p" in name[4:]:
+            continue
+        rd_b += int(p[5]) * 512
+        wr_b += int(p[9]) * 512
+    return rd_b, wr_b
+
+
+def netio():
+    rx = tx = 0
+    for line in rd("/proc/net/dev").splitlines()[2:]:
+        iface, data = line.split(":", 1)
+        iface = iface.strip()
+        if iface == "lo" or iface.startswith(("veth", "docker", "virbr", "waydroid", "podman")):
+            continue
+        p = data.split()
+        rx += int(p[0]); tx += int(p[8])
+    return rx, tx
+
+
+def battery():
+    for b in glob.glob("/sys/class/power_supply/BAT*"):
+        cap = num(f"{b}/capacity")
+        if cap is None:
+            continue
+        res = {"percent": cap, "status": rd(f"{b}/status")}
+        p = num(f"{b}/power_now", scale=1e6)
+        if p:
+            res["watts"] = p
+        return res
+    return None
+
+
+def top_procs(prev_procs, dt, ncpu, total_mem):
+    hz = os.sysconf("SC_CLK_TCK")
+    now, out = {}, []
+    for d in os.listdir("/proc"):
+        if not d.isdigit():
+            continue
+        try:
+            stat = rd(f"/proc/{d}/stat")
+            r = stat.rindex(")")
+            name = stat[stat.index("(") + 1:r]
+            f = stat[r + 2:].split()
+            ticks = int(f[11]) + int(f[12])
+            rss = int(f[21]) * os.sysconf("SC_PAGE_SIZE")
+        except Exception:
+            continue
+        now[d] = ticks
+        if d in prev_procs and dt > 0:
+            cpu = (ticks - prev_procs[d]) / hz / dt * 100 / max(1, ncpu)
+            out.append({"name": name, "cpu": round(cpu, 1), "mem": rss})
+    out.sort(key=lambda p: (p["cpu"], p["mem"]), reverse=True)
+    return out[:5], now, len(now)
+
+
+def main():
+    t = time.time()
+    try:
+        prev = json.loads(rd(STATE, "{}"))
+    except Exception:
+        prev = {}
+    dt = t - prev.get("t", t)
+
+    ct = cpu_times()
+    pct = {}
+    for k, (tot, idle) in ct.items():
+        if k in prev.get("cpu", {}):
+            pt, pi = prev["cpu"][k]
+            dtot = tot - pt
+            pct[k] = round(100 * (1 - (idle - pi) / dtot), 1) if dtot > 0 else 0.0
+    cores = sorted((k for k in ct if k != "cpu"), key=lambda k: int(k[3:]))
+    freqs = [num(f"/sys/devices/system/cpu/{c}/cpufreq/scaling_cur_freq", scale=1000) for c in cores]
+    freqs = [f for f in freqs if f]
+    model = ""
+    for line in rd("/proc/cpuinfo").splitlines():
+        if line.startswith("model name"):
+            model = line.split(":", 1)[1].strip(); break
+
+    mem = {}
+    for line in rd("/proc/meminfo").splitlines():
+        k, v = line.split(":", 1)
+        mem[k] = int(v.split()[0]) * 1024
+    tm = temps()
+    cpu_temp = max(tm.get("coretemp", []) + tm.get("k10temp", []) + tm.get("zenpower", []) + tm.get("cpu_thermal", []) or [0]) or None
+
+    drd, dwr = diskio()
+    rx, tx = netio()
+    rate = lambda cur, key: max(0.0, (cur - prev[key]) / dt) if key in prev and dt > 0 else 0.0
+    procs, procstate, nproc = top_procs(prev.get("procs", {}), dt, len(cores), mem.get("MemTotal", 1))
+
+    out = {
+        "cpu": {"model": model, "usage": pct.get("cpu", 0.0), "cores": [pct.get(c, 0.0) for c in cores],
+                "freq": round(sum(freqs) / len(freqs)) if freqs else None, "temp": cpu_temp},
+        "mem": {"total": mem.get("MemTotal", 0), "used": mem.get("MemTotal", 0) - mem.get("MemAvailable", 0),
+                "swap_total": mem.get("SwapTotal", 0), "swap_used": mem.get("SwapTotal", 0) - mem.get("SwapFree", 0)},
+        "gpus": gpu_info(prev, dt, t),
+        "disks": disks(),
+        "diskio": {"read": rate(drd, "drd"), "write": rate(dwr, "dwr")},
+        "net": {"down": rate(rx, "rx"), "up": rate(tx, "tx")},
+        "nvme_temp": max(tm["nvme"]) if "nvme" in tm else None,
+        "battery": battery(),
+        "load": [float(x) for x in rd("/proc/loadavg", "0 0 0").split()[:3]],
+        "uptime": float(rd("/proc/uptime", "0 0").split()[0]),
+        "procs": procs, "nproc": nproc,
+    }
+    try:
+        with open(STATE + ".tmp", "w") as f:
+            json.dump({"t": t, "cpu": ct, "drd": drd, "dwr": dwr, "rx": rx, "tx": tx, "procs": procstate}, f)
+        os.replace(STATE + ".tmp", STATE)
+    except Exception:
+        pass
+    print(json.dumps(out, separators=(",", ":")))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,47 @@
+[
+ {
+  "id": "capix",
+  "name": "Capix (padrão)",
+  "dir": "/usr/share/wallpapers/Capix"
+ },
+ {
+  "id": "entardecer-na-cidade",
+  "name": "Entardecer na cidade",
+  "dir": "/usr/share/wallpapers/Capix-entardecer-na-cidade"
+ },
+ {
+  "id": "cometa",
+  "name": "Noite do cometa",
+  "dir": "/usr/share/wallpapers/Capix-cometa"
+ },
+ {
+  "id": "verao",
+  "name": "Tarde de verão",
+  "dir": "/usr/share/wallpapers/Capix-verao"
+ },
+ {
+  "id": "trem-no-mar",
+  "name": "Trem sobre o mar",
+  "dir": "/usr/share/wallpapers/Capix-trem-no-mar"
+ },
+ {
+  "id": "sakura",
+  "name": "Primavera de sakura",
+  "dir": "/usr/share/wallpapers/Capix-sakura"
+ },
+ {
+  "id": "neon-chuva",
+  "name": "Neon na chuva",
+  "dir": "/usr/share/wallpapers/Capix-neon-chuva"
+ },
+ {
+  "id": "lanternas",
+  "name": "Festival de lanternas",
+  "dir": "/usr/share/wallpapers/Capix-lanternas"
+ },
+ {
+  "id": "amanhecer",
+  "name": "Amanhecer nas montanhas",
+  "dir": "/usr/share/wallpapers/Capix-amanhecer"
+ }
+]

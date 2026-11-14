@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Capix Central
+Comment=Atualizações, apps Android, segurança, quiosque e mais
+Exec=capix-central
+Icon=capix-start
+Categories=Settings;System;
+Keywords=capix;configurações;atualização;android;quiosque;antivírus;ia;
+StartupWMClass=CapixCentral

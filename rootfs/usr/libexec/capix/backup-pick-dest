@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Escolhe a pasta de destino do backup e grava na config (nível de usuário).
+set -euo pipefail
+start="$(ls -d /run/media/$USER/* /media/$USER/* 2>/dev/null | head -1 || echo "$HOME")"
+dir="$(kdialog --title 'Onde guardar os backups' --getexistingdirectory "$start")" || exit 0
+[ -z "$dir" ] && exit 0
+cfg="$HOME/.config/capix/backup.json"; mkdir -p "$(dirname "$cfg")"
+python3 - "$dir" "$cfg" <<'PY'
+import json,sys,os
+d,cfg=sys.argv[1],sys.argv[2]
+try: c=json.load(open(cfg))
+except Exception: c={}
+c["dest"]=os.path.join(d,"CapixBackup"); c.setdefault("keep",10)
+json.dump(c,open(cfg,"w"))
+print(c["dest"])
+PY

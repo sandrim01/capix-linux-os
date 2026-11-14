@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capix Linux OS — prévia</title>
+<meta name="author" content="UnbugSTI (UnbugSolutions-TI)">
+<style>
+  :root{
+    --bg:#121214; --cream:#F2F2F2; --orange:#F68B2C; --orangeL:#FBA24E; --brown:#A8653A; --ink:#5A3E2E;
+    --glass:rgba(22,22,24,.82); --glass2:rgba(32,32,35,.94);
+    --font: "Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--cream);user-select:none}
+  .screen{position:fixed;inset:0;transition:opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1)}
+  .hidden{opacity:0;pointer-events:none}
+  .wall{position:absolute;inset:0;background:url(__WALLPAPER__) center/cover no-repeat}
+
+  /* ---------- BOOT ---------- */
+  #boot{background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:none}
+  #bootCapy{height:min(62vh,520px);aspect-ratio:425/620}
+  .wordmark{text-align:center;line-height:1}
+  .wordmark b{display:block;font-weight:600;font-size:min(9vh,64px);letter-spacing:-1px}
+  .wordmark small{display:block;margin-top:6px;font-size:min(2vh,14px);letter-spacing:5px;color:var(--orangeL);font-weight:500}
+  .spinner{position:absolute;bottom:9vh;width:44px;height:44px}
+  .spinner i{position:absolute;inset:0;animation:orbit 4.2s infinite}
+  .spinner i::after{content:"";position:absolute;left:50%;top:0;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#5A3E2E}
+  .spinner i:nth-child(2){animation-delay:.12s}.spinner i:nth-child(3){animation-delay:.24s}
+  .spinner i:nth-child(4){animation-delay:.36s}.spinner i:nth-child(5){animation-delay:.48s}
+  @keyframes orbit{
+    0%{transform:rotate(225deg);opacity:1;animation-timing-function:ease-out}
+    7%{transform:rotate(345deg);animation-timing-function:linear}
+    30%{transform:rotate(455deg);animation-timing-function:ease-in-out}
+    39%{transform:rotate(690deg);animation-timing-function:linear}
+    70%{transform:rotate(815deg);opacity:1;animation-timing-function:ease-out}
+    75%{transform:rotate(945deg);animation-timing-function:ease-out}
+    76%,100%{transform:rotate(945deg);opacity:0}
+  }
+
+  /* ---------- LOCK ---------- */
+  #lock{cursor:pointer}
+  #lock .clock{position:absolute;left:5vw;bottom:9vh;text-shadow:0 2px 18px rgba(0,0,0,.45)}
+  #lock .clock .t{font-size:clamp(64px,13vh,128px);font-weight:300;letter-spacing:-2px;line-height:1}
+  #lock .clock .d{font-size:clamp(20px,3.6vh,36px);font-weight:400;margin-top:6px}
+  #lock .hint{position:absolute;left:5vw;bottom:4vh;font-size:13px;opacity:.7}
+  #lock.up{transform:translateY(-100%)}
+
+  /* ---------- LOGIN ---------- */
+  #login .wall{filter:blur(22px) brightness(.62);transform:scale(1.08)}
+  .login-box{position:absolute;left:50%;top:50%;transform:translate(-50%,-54%);display:flex;flex-direction:column;align-items:center;width:340px}
+  .avatar{width:300px;height:250px;position:relative;display:grid;place-items:center;overflow:hidden;
+          -webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 80%,transparent)}
+  .avatar::before{content:"";position:absolute;inset:20px 40px 0;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.12),transparent)}
+  #loginCapy{width:232px;height:300px;margin-top:6px;position:relative}
+  #loginCapy svg{width:100%;height:100%;overflow:visible}
+  .hello{font-size:30px;font-weight:300;margin:4px 0 18px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+  .field{width:100%;position:relative;margin-bottom:10px}
+  .field input{width:100%;height:40px;padding:0 44px 0 12px;font:inherit;font-size:15px;color:#1b120d;background:rgba(255,255,255,.92);
+               border:2px solid transparent;outline:none;border-radius:2px;transition:border-color .15s, background .15s}
+  .field input:hover{background:#fff}
+  .field input:focus{border-color:var(--orange);background:#fff}
+  .field input::placeholder{color:#6d5a4d}
+  .go{position:absolute;right:2px;top:2px;width:36px;height:36px;border:0;background:var(--orange);color:#fff;cursor:pointer;display:grid;place-items:center}
+  .go:hover{background:#ff9b40}
+  .go svg{width:18px;height:18px}
+  .peek{position:absolute;right:40px;top:2px;width:36px;height:36px;border:0;background:transparent;color:#6d5a4d;cursor:pointer;display:grid;place-items:center}
+  .peek svg{width:18px}
+  .msg{min-height:20px;font-size:13px;text-align:center;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+  .msg.err{color:#ffb4a8}
+  .demo{margin-top:14px;font-size:12px;opacity:.6;text-align:center}
+  .shake{animation:shake .5s}
+  @keyframes shake{10%,90%{transform:translateX(-2px)}20%,80%{transform:translateX(4px)}30%,50%,70%{transform:translateX(-7px)}40%,60%{transform:translateX(7px)}}
+  .corner{position:absolute;right:22px;bottom:20px;display:flex;gap:6px}
+  .corner button,.corner span{background:transparent;border:0;color:var(--cream);width:40px;height:40px;display:grid;place-items:center;cursor:pointer;border-radius:2px;font:inherit;font-size:12px}
+  .corner button:hover{background:rgba(255,255,255,.12)}
+  .corner svg{width:20px;height:20px}
+  .welcome{display:flex;flex-direction:column;align-items:center;gap:16px;font-size:26px;font-weight:300}
+  .ring{width:36px;height:36px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:var(--cream);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+
+  /* ---------- Widget Capix Monitor ---------- */
+  .monitor{position:absolute;right:16px;top:14px;width:300px;max-height:calc(100% - 80px);overflow:hidden;background:rgba(22,22,24,.80);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:12px 14px;font-size:12px;color:#F2F2F2;z-index:2;backdrop-filter:blur(6px)}
+  .monitor .hd{display:flex;align-items:center;gap:8px;margin-bottom:2px}.monitor .hd img{width:22px;height:22px}.monitor .hd b{font-size:14px}.monitor .hd span{margin-left:auto}
+  .monitor .mu{color:#ABABB2;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .monitor .sec{display:flex;justify-content:space-between;margin-top:9px;margin-bottom:3px}.monitor .sec b{color:#F68B2C;font-size:11px;letter-spacing:1px}
+  .monitor .big{font-size:26px;font-weight:300;width:66px;flex:none}
+  .monitor .row{display:flex;align-items:center;gap:8px}
+  .monitor .bar{height:6px;border-radius:3px;background:rgba(255,255,255,.1);flex:1;overflow:hidden}.monitor .bar i{display:block;height:100%;border-radius:3px;transition:width .4s}
+  .monitor canvas{display:block;width:100%;height:30px;margin-top:3px}
+  .monitor .cores{display:flex;gap:3px;margin-top:4px}.monitor .cores div{flex:1;height:20px;background:rgba(255,255,255,.08);border-radius:2px;position:relative;overflow:hidden}.monitor .cores i{position:absolute;bottom:0;left:0;right:0;transition:height .4s}
+  .monitor .pr{display:flex;gap:6px;margin-top:2px}.monitor .pr span{width:52px;text-align:right}.monitor .pr span:first-child{flex:1;width:auto;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @media (max-width:1000px){.monitor{display:none}}
+
+
+  .wm{position:absolute;right:18px;bottom:62px;text-align:right;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);pointer-events:none;z-index:1;line-height:1.25}
+  .wm b{display:block;font-weight:400;font-size:15px;opacity:.55}.wm span{font-size:12px;opacity:.45}
+  .wm-login{position:absolute;left:22px;bottom:18px;font-size:12px;letter-spacing:.5px;color:var(--cream);opacity:.45;z-index:3;pointer-events:none}
+  .wm-boot{position:absolute;bottom:28px;left:0;right:0;text-align:center;font-size:13px;font-weight:500;color:#9A7A64;letter-spacing:.5px}
+  /* ---------- DESKTOP ---------- */
+  #desktop{cursor:default}
+  .icons{position:absolute;left:10px;top:10px;display:grid;gap:6px}
+  .dicon{width:84px;padding:6px 2px;text-align:center;font-size:12px;border:1px solid transparent;cursor:pointer;text-shadow:0 1px 3px #000}
+  .dicon:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22)}
+  .dicon .ic{width:42px;height:42px;margin:0 auto 4px}
+  .taskbar{position:absolute;left:0;right:0;bottom:0;height:48px;background:var(--glass);backdrop-filter:blur(18px) saturate(1.4);display:flex;align-items:stretch;z-index:20}
+  .tb{width:48px;display:grid;place-items:center;border:0;background:transparent;color:var(--cream);cursor:pointer;position:relative}
+  .tb:hover{background:rgba(255,255,255,.1)}
+  .tb.active::after{content:"";position:absolute;left:8px;right:8px;bottom:0;height:2px;background:var(--orange)}
+  .tb .ic{width:24px;height:24px}
+  .start .ic{width:30px;height:30px}
+  .search{width:300px;margin:0 4px;background:rgba(255,255,255,.92);color:#5a4a3f;display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;cursor:text}
+  .search svg{width:16px;color:#5a4a3f}
+  .tray{margin-left:auto;display:flex;align-items:stretch}
+  .tray .tb{width:auto;padding:0 8px;font-size:12px}
+  .tray .tb svg{width:16px;height:16px}
+  .clockbox{text-align:center;line-height:1.3;font-size:12px}
+  .showdesk{width:6px!important;border-left:1px solid rgba(255,255,255,.25)!important}
+
+  .startmenu{position:absolute;left:0;bottom:48px;width:660px;height:560px;background:var(--glass2);backdrop-filter:blur(24px) saturate(1.4);display:flex;z-index:19;
+             transform:translateY(16px);opacity:0;pointer-events:none;transition:transform .2s ease, opacity .2s ease}
+  .startmenu.open{transform:none;opacity:1;pointer-events:auto}
+  .rail{width:48px;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:4px}
+  .rail button{width:48px;height:48px;border:0;background:transparent;color:var(--cream);display:grid;place-items:center;cursor:pointer}
+  .rail button:hover{background:rgba(255,255,255,.1)}
+  .rail svg{width:18px;height:18px}
+  .applist{width:250px;overflow:auto;padding:8px 0}
+  .applist h6{font-size:13px;font-weight:600;padding:10px 14px 4px;color:#cfcfd4}
+  .app{display:flex;align-items:center;gap:12px;padding:6px 14px;font-size:14px;cursor:pointer}
+  .app:hover{background:rgba(255,255,255,.1)}
+  .app .ic{width:30px;height:30px;padding:4px;background:#3a3a3f;display:grid;place-items:center}
+  .tiles{flex:1;padding:14px 16px;overflow:auto}
+  .tiles h5{font-size:13px;font-weight:500;margin:6px 0 8px}
+  .grid{display:grid;grid-template-columns:repeat(3,110px);grid-auto-rows:110px;gap:4px;margin-bottom:12px}
+  .tile{background:#3a3a3f;position:relative;cursor:pointer;padding:8px;font-size:12px;display:flex;flex-direction:column;justify-content:flex-end;outline:2px solid transparent;transition:outline-color .1s}
+  .tile:hover{outline-color:rgba(255,255,255,.45)}
+  .tile .ic{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);width:40px;height:40px}
+  .tile.w2{grid-column:span 2}
+  .tile.c1{background:#D9762A}.tile.c2{background:#3a3a3f}.tile.c3{background:#2e2e33}.tile.c4{background:#3f6b33}.tile.c5{background:#46464c}
+  .powermenu{position:absolute;left:48px;bottom:8px;background:#2b2b2f;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;min-width:170px;z-index:5}
+  .powermenu.open{display:block}
+  .powermenu div{padding:10px 16px;font-size:14px;cursor:pointer}
+  .powermenu div:hover{background:rgba(255,255,255,.1)}
+
+  .win{position:absolute;width:640px;height:420px;background:#1e1e21;box-shadow:0 16px 48px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;z-index:10}
+  .win .bar{height:32px;display:flex;align-items:center;background:#2b2b2f;cursor:move}
+  .win .bar .ttl{flex:1;display:flex;align-items:center;gap:8px;padding-left:10px;font-size:12px}
+  .win .bar .ttl .ic{width:16px;height:16px}
+  .win .bar button{width:46px;height:32px;border:0;background:transparent;color:var(--cream);cursor:pointer;font-size:14px}
+  .win .bar button:hover{background:rgba(255,255,255,.1)}
+  .win .bar button.x:hover{background:#c42b1c}
+  .win .body{flex:1;padding:22px 26px;overflow:auto;font-size:14px;line-height:1.55;color:#e6e6e6}
+  .win .body h2{font-size:22px;font-weight:400;margin-bottom:10px;color:var(--cream)}
+  .win .body code{background:#2f2f33;padding:1px 6px;border-radius:3px;font-size:13px}
+  .win .body ul{margin:8px 0 0 18px}
+  .toast{position:absolute;right:12px;bottom:60px;width:360px;background:var(--glass2);backdrop-filter:blur(20px);padding:14px 16px;display:flex;gap:12px;z-index:25;
+         transform:translateX(120%);transition:transform .35s cubic-bezier(.2,.8,.2,1);border-left:3px solid var(--orange)}
+  .toast.show{transform:none}
+  .toast .ic{width:36px;height:36px;flex:none}
+  .toast b{display:block;font-size:14px;font-weight:600;margin-bottom:2px}
+  .toast span{font-size:13px;opacity:.85}
+  .skip{position:fixed;right:12px;top:10px;z-index:99;font-size:11px;opacity:.45;background:none;border:0;color:#5A3E2E;cursor:pointer}
+  .skip:hover{opacity:.8}
+</style>
+</head>
+<body>
+
+<!-- BOOT -->
+<section id="boot" class="screen">
+  <div id="bootCapy"></div>
+  <div class="spinner"><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="wm-boot">by UnbugSTI</div>
+</section>
+
+<!-- LOGIN -->
+<section id="login" class="screen hidden">
+  <div class="wall"></div>
+  <div class="login-box" id="loginBox">
+    <div class="avatar"><div id="loginCapy"></div></div>
+    <div class="hello" id="hello">Olá!</div>
+    <form id="form" autocomplete="off" style="width:100%">
+      <div class="field"><input id="user" placeholder="Nome de usuário" spellcheck="false" autocomplete="off"></div>
+      <div class="field">
+        <input id="pass" type="password" placeholder="Senha" autocomplete="new-password">
+        <button type="button" class="peek" id="peek" title="Mostrar senha"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="go" type="submit" title="Entrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </form>
+    <div class="demo">Demonstração: qualquer usuário · senha <b>capix</b></div>
+  </div>
+  <div class="wm-login">Capix Linux OS · by UnbugSTI</div>
+  <div class="corner">
+    <span>POR</span>
+    <button title="Rede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg></button>
+    <button title="Acessibilidade"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4.5" r="1.8"/><path d="M4 8l8 2 8-2M12 10v5l-3 6M12 15l3 6"/></svg></button>
+    <button title="Desligar" id="powerLogin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+  </div>
+</section>
+
+<!-- LOCK -->
+<section id="lock" class="screen hidden">
+  <div class="wall"></div>
+  <div class="clock"><div class="t" id="lt"></div><div class="d" id="ld"></div></div>
+  <div class="hint">Clique ou pressione qualquer tecla para entrar</div>
+  <div class="wm-login" style="left:auto;right:22px">Capix Linux OS · by UnbugSTI</div>
+</section>
+
+<!-- DESKTOP -->
+<section id="desktop" class="screen hidden">
+  <div class="wall"></div>
+  <div class="icons">
+    <div class="dicon" data-app="welcome"><div class="ic" data-icon="capy"></div>Bem-vindo</div>
+    <div class="dicon" data-app="files"><div class="ic" data-icon="folder"></div>Arquivos</div>
+    <div class="dicon" data-app="android"><div class="ic" data-icon="phone"></div>Apps Android</div>
+    <div class="dicon" data-app="wallpapers"><div class="ic" data-icon="pic"></div>Papéis de parede</div>
+    <div class="dicon" data-app="trash"><div class="ic" data-icon="trash"></div>Lixeira</div>
+  </div>
+
+  <div class="monitor" id="monitor"></div>
+  <div class="wm"><b>Capix Linux OS</b><span>by UnbugSTI</span></div>
+
+  <div class="startmenu" id="startmenu">
+    <div class="rail">
+      <button title="Conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
+      <button title="Documentos" data-app="files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg></button>
+      <button title="Configurações" data-app="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <button title="Energia" id="powerBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v9"/><path d="M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></button>
+      <div class="powermenu" id="powermenu">
+        <div data-power="lock">Bloquear</div>
+        <div data-power="logout">Sair</div>
+        <div data-power="reboot">Reiniciar</div>
+      </div>
+    </div>
+    <div class="applist" id="applist"></div>
+    <div class="tiles">
+      <h5>Produtividade</h5>
+      <div class="grid">
+        <div class="tile c1 w2" data-app="browser"><div class="ic" data-icon="globe"></div>Navegador</div>
+        <div class="tile c2" data-app="files"><div class="ic" data-icon="folder"></div>Arquivos</div>
+        <div class="tile c3" data-app="terminal"><div class="ic" data-icon="terminal"></div>Terminal</div>
+        <div class="tile c5" data-app="office"><div class="ic" data-icon="doc"></div>Escritório</div>
+        <div class="tile c2" data-app="settings"><div class="ic" data-icon="gear"></div>Capix Central</div>
+      </div>
+      <h5>Explorar</h5>
+      <div class="grid">
+        <div class="tile c4 w2" data-app="android"><div class="ic" data-icon="phone"></div>Apps Android</div>
+        <div class="tile c1" data-app="store"><div class="ic" data-icon="bag"></div>Loja Capix</div>
+        <div class="tile c5" data-app="games"><div class="ic" data-icon="game"></div>Modo gamer</div>
+        <div class="tile c3 w2" data-app="welcome"><div class="ic" data-icon="capy"></div>Bem-vindo ao Capix</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="windows"></div>
+
+  <div class="toast" id="toast"><div class="ic" data-icon="capy"></div><div><b>Sistema protegido</b><span>Atualizações automáticas ativas. A próxima versão é aplicada ao reiniciar — e dá para voltar atrás se algo der errado.</span></div></div>
+
+  <div class="taskbar">
+    <button class="tb start" id="startBtn" title="Iniciar"><div class="ic" data-icon="capy"></div></button>
+    <div class="search" id="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Digite aqui para pesquisar</div>
+    <button class="tb" title="Visão de tarefas"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="8" height="14"/><rect x="13" y="5" width="8" height="14"/></svg></button>
+    <button class="tb" data-app="browser" title="Navegador"><div class="ic" data-icon="globe"></div></button>
+    <button class="tb" data-app="files" title="Arquivos"><div class="ic" data-icon="folder"></div></button>
+    <button class="tb" data-app="android" title="Apps Android"><div class="ic" data-icon="phone"></div></button>
+    <button class="tb" data-app="store" title="Loja Capix"><div class="ic" data-icon="bag"></div></button>
+    <button class="tb" data-app="terminal" title="Terminal"><div class="ic" data-icon="terminal"></div></button>
+    <div class="tray">
+      <button class="tb" title="Mostrar ícones ocultos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6-6 6 6"/></svg></button>
+      <button class="tb" title="Bateria 86%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="7" width="18" height="10" rx="1"/><path d="M22 10v4"/><rect x="4" y="9" width="12" height="6" fill="currentColor" stroke="none"/></svg></button>
+      <button class="tb" title="Rede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg></button>
+      <button class="tb" title="Volume"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+      <button class="tb" title="Idioma">POR<br>ABNT2</button>
+      <button class="tb clockbox" id="clock"></button>
+      <button class="tb" title="Central de ações" id="notifBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4h16v12H8l-4 4z"/></svg></button>
+      <button class="tb showdesk" title="Mostrar área de trabalho"></button>
+    </div>
+  </div>
+</section>
+
+<button class="skip" id="skip">pular abertura ›</button>
+
+<script>
+/*__CAPYBARA__*/
+</script>
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const show = el => el.classList.remove('hidden');
+const hide = el => el.classList.add('hidden');
+const lerp = (a, b, k) => a + (b - a) * k;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ================= ÍCONES ================= */
+const ICONS = {
+  capy: () => `<img src="${window.CAPIX_ICON}" alt="" style="width:100%;height:100%;object-fit:contain">`,
+  folder: () => `<svg viewBox="0 0 48 48"><path d="M4 10h15l4 5h21v25H4z" fill="#E8A13A"/><path d="M4 18h40v22H4z" fill="#F8C35B"/></svg>`,
+  phone: () => `<svg viewBox="0 0 48 48"><rect x="13" y="4" width="22" height="40" rx="4" fill="#2b2b2b"/><rect x="15.5" y="8" width="17" height="30" rx="1" fill="#86C84F"/><circle cx="24" cy="41" r="1.4" fill="#aaa"/><path d="M19 25l4 4 7-8" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  trash: () => `<svg viewBox="0 0 48 48"><path d="M12 14h24l-2 28H14z" fill="#d9d2cb" stroke="#8a7f75" stroke-width="1.5"/><rect x="9" y="9" width="30" height="5" fill="#bdb3a9"/><path d="M20 19v18M24 19v18M28 19v18" stroke="#8a7f75" stroke-width="1.5"/></svg>`,
+  globe: () => `<svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="2.4"><circle cx="24" cy="24" r="17" fill="#2F7FD6" stroke="#cfe3fa"/><ellipse cx="24" cy="24" rx="7" ry="17" stroke="#cfe3fa"/><path d="M7 24h34M10 15h28M10 33h28" stroke="#cfe3fa"/></svg>`,
+  terminal: () => `<svg viewBox="0 0 48 48"><rect x="4" y="8" width="40" height="32" rx="3" fill="#2a1c14" stroke="#F68B2C" stroke-width="2"/><path d="M11 18l7 6-7 6" fill="none" stroke="#FFF4E6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 31h12" stroke="#F68B2C" stroke-width="3" stroke-linecap="round"/></svg>`,
+  bag: () => `<svg viewBox="0 0 48 48"><path d="M8 16h32l-3 26H11z" fill="#fff"/><path d="M17 16v-3a7 7 0 0 1 14 0v3" fill="none" stroke="#fff" stroke-width="3"/><path d="M18 26l5 5 8-9" fill="none" stroke="#F68B2C" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  doc: () => `<svg viewBox="0 0 48 48"><path d="M10 4h20l8 8v32H10z" fill="#fff"/><path d="M30 4v8h8" fill="#ddd"/><path d="M15 20h18M15 26h18M15 32h12" stroke="#B8561B" stroke-width="2.6"/></svg>`,
+  game: () => `<svg viewBox="0 0 48 48"><path d="M12 16h24a8 8 0 0 1 8 8v2a8 8 0 0 1-14 5.2L28 30h-8l-2 1.2A8 8 0 0 1 4 26v-2a8 8 0 0 1 8-8z" fill="#fff"/><path d="M13 21v7M9.5 24.5h7" stroke="#B8561B" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="22.5" r="2" fill="#B8561B"/><circle cx="37" cy="26.5" r="2" fill="#B8561B"/></svg>`,
+  pic: () => `<svg viewBox="0 0 48 48"><rect x="5" y="9" width="38" height="30" rx="2" fill="#5a3f8f"/><path d="M5 33l11-11 8 8 6-6 13 13v2H5z" fill="#F68B2C"/><circle cx="33" cy="18" r="4" fill="#ffd27a"/></svg>`,
+  gear: () => `<svg viewBox="0 0 48 48" fill="none" stroke="#fff" stroke-width="3"><circle cx="24" cy="24" r="6"/><path d="M24 5v6M24 37v6M5 24h6M37 24h6M10.6 10.6l4.2 4.2M33.2 33.2l4.2 4.2M10.6 37.4l4.2-4.2M33.2 14.8l4.2-4.2"/></svg>`,
+};
+function paintIcons(root = document) {
+  root.querySelectorAll('[data-icon]').forEach(el => { if (!el.dataset.done) { el.innerHTML = ICONS[el.dataset.icon](); el.dataset.done = 1; } });
+  root.querySelectorAll('[data-icon] svg').forEach(s => { s.style.width = '100%'; s.style.height = '100%'; });
+}
+paintIcons();
+
+/* ================= BOOT: capivara mastigando ================= */
+const bootEl = $('#boot'), bootCapy = $('#bootCapy');
+let stopLogo = null;
+function runBoot(ms = 5200) {
+  hide($('#desktop')); hide($('#login')); hide($('#lock'));
+  show(bootEl); $('#skip').style.display = '';
+  if (stopLogo) stopLogo(); stopLogo = CapixLogo.mount(bootCapy);
+  clearTimeout(runBoot.t);
+  runBoot.t = setTimeout(endBoot, ms);
+}
+function endBoot() { clearTimeout(runBoot.t); if (stopLogo) { stopLogo(); stopLogo = null; } hide(bootEl); $('#skip').style.display = 'none'; showLock(); }
+$('#skip').onclick = () => { if (!bootEl.classList.contains('hidden')) endBoot(); };
+
+/* ================= LOCK ================= */
+const lockEl = $('#lock');
+function fmtClock() {
+  const d = new Date();
+  $('#lt').textContent = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const ds = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  $('#ld').textContent = ds.charAt(0).toUpperCase() + ds.slice(1);
+  $('#clock').innerHTML = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '<br>' + d.toLocaleDateString('pt-BR');
+}
+fmtClock(); setInterval(fmtClock, 10000);
+function showLock() { lockEl.classList.remove('up'); show(lockEl); show($('#login')); loginActive = true; }
+function unlock() {
+  if (lockEl.classList.contains('hidden') || lockEl.classList.contains('up')) return;
+  lockEl.classList.add('up');
+  setTimeout(() => { hide(lockEl); $('#user').focus(); }, 450);
+}
+lockEl.addEventListener('click', unlock);
+document.addEventListener('keydown', e => { if (!lockEl.classList.contains('hidden') && !lockEl.classList.contains('up')) { e.preventDefault(); unlock(); } });
+
+/* ================= LOGIN: capivara interativa ================= */
+const loginCapy = $('#loginCapy'), user = $('#user'), pass = $('#pass'), msg = $('#msg');
+let loginActive = false;
+const cur = { px: 0, py: 0, rot: 0 };
+const tgt = { ...cur };
+let mood = 'normal', moodUntil = 0, shakeStart = -1, focusMode = 'idle', mouse = null, passVisible = false;
+let nextBlink = performance.now() + 2500, blinkStart = -1;
+
+const ctx = document.createElement('canvas').getContext('2d');
+function caretRatio(inp) {
+  const cs = getComputedStyle(inp);
+  ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const pos = inp.selectionEnd ?? inp.value.length;
+  const w = ctx.measureText(inp.value.slice(0, pos)).width;
+  const padL = parseFloat(cs.paddingLeft);
+  const x = padL + w - inp.scrollLeft;
+  return clamp(x / inp.clientWidth, 0, 1);
+}
+function updateTargets() {
+  if (focusMode === 'user') {
+    const r = caretRatio(user) - 0.5;            // -0.5 .. 0.5
+    Object.assign(tgt, { px: r * 5, py: 1.8, rot: r * 2.5, eyes: 'open', sip: 0 });
+  } else if (focusMode === 'pass' && !passVisible) {
+    Object.assign(tgt, { px: 0, py: 0, rot: 0, eyes: 'closed', sip: 1 });   // toma um gole de café de olhos fechados
+  } else if (focusMode === 'pass' && passVisible) {
+    Object.assign(tgt, { px: -0.5, py: 2.4, rot: 0, eyes: 'open', sip: 0.75 });    // espia por cima da xícara
+  } else if (mouse) {
+    const r = loginCapy.getBoundingClientRect();
+    const dx = (mouse.x - (r.left + r.width * 0.56)) / innerWidth, dy = (mouse.y - (r.top + r.height * 0.28)) / innerHeight;
+    Object.assign(tgt, { px: clamp(dx * 10, -2.6, 2.6), py: clamp(dy * 9, -2, 2), rot: clamp(dx * 3, -1.5, 1.5), eyes: 'open', sip: 0 });
+  } else Object.assign(tgt, { px: 0, py: 0, rot: 0, eyes: 'closed', sip: 0 });
+  if (mood === 'sad') tgt.sip = 0;
+}
+['input', 'keyup', 'click', 'select', 'focus'].forEach(ev => {
+  user.addEventListener(ev, () => { focusMode = 'user'; });
+  pass.addEventListener(ev, () => { focusMode = 'pass'; });
+});
+document.addEventListener('selectionchange', () => { if (document.activeElement === user) focusMode = 'user'; });
+user.addEventListener('blur', () => setTimeout(() => { if (![user, pass].includes(document.activeElement)) focusMode = 'idle'; }, 0));
+pass.addEventListener('blur', () => setTimeout(() => { if (![user, pass].includes(document.activeElement)) focusMode = 'idle'; }, 0));
+addEventListener('mousemove', e => { mouse = { x: e.clientX, y: e.clientY }; });
+$('#peek').addEventListener('mousedown', e => e.preventDefault());
+$('#peek').onclick = () => { passVisible = !passVisible; pass.type = passVisible ? 'text' : 'password'; pass.focus(); };
+user.addEventListener('input', () => { $('#hello').textContent = user.value.trim() ? `Olá, ${user.value.trim()}!` : 'Olá!'; });
+
+const updateCapy = CapixDrawing.mount(loginCapy, 'l');
+function loginLoop(now) {
+  requestAnimationFrame(loginLoop);
+  if ($('#login').classList.contains('hidden')) return;
+  updateTargets();
+  for (const key of ['px', 'py', 'rot']) cur[key] = lerp(cur[key] || 0, tgt[key], 0.14);
+  cur.sip = lerp(cur.sip || 0, tgt.sip || 0, 0.06);
+  if (now > nextBlink && blinkStart < 0) blinkStart = now;
+  let blink = 0;
+  if (blinkStart >= 0) {
+    const bt = (now - blinkStart) / 180;
+    blink = Math.sin(Math.min(1, bt) * Math.PI);
+    if (bt >= 1) { blinkStart = -1; nextBlink = now + 2200 + Math.random() * 3000; }
+  }
+  // balançar "não"
+  let shake = 0;
+  if (shakeStart >= 0) {
+    const st = (now - shakeStart) / 1000;
+    if (st < 1.1) shake = Math.sin(st * 22) * 11 * (1 - st / 1.1);
+    else shakeStart = -1;
+  }
+  if (now > moodUntil && mood !== 'happy') mood = 'normal';
+  const eyes = mood === 'sad' ? 'sad' : mood === 'happy' ? 'happy' : (tgt.eyes === 'closed' && cur.sip < 0.4 && focusMode === 'pass') ? 'open' : tgt.eyes;
+  updateCapy({
+    eyes, blink, pupil: mood === 'sad' ? [0, 1] : [cur.px, cur.py],
+    rot: cur.rot + shake * 0.15, headRot: shake, sip: cur.sip, breath: now / 1000, steamT: now / 1000,
+  });
+}
+requestAnimationFrame(loginLoop);
+
+/* --- Autenticação (no sistema real: SDDM/PAM; aqui: demonstração) --- */
+const auth = (u, p) => new Promise(res => setTimeout(() => res(p === 'capix'), 450));
+$('#form').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!user.value.trim()) { user.focus(); msg.className = 'msg err'; msg.textContent = 'Digite seu nome de usuário.'; return; }
+  msg.className = 'msg'; msg.textContent = 'Verificando…';
+  const ok = await auth(user.value.trim(), pass.value);
+  if (ok) {
+    mood = 'happy'; msg.textContent = '';
+    setTimeout(() => {
+      $('#loginBox').style.opacity = 0;
+      setTimeout(enterDesktop, 450);
+    }, 700);
+  } else {
+    mood = 'sad'; moodUntil = performance.now() + 1800;
+    shakeStart = performance.now();
+    msg.className = 'msg err'; msg.textContent = 'Senha incorreta. Tente novamente.';
+    const f = pass.parentElement; f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake');
+    pass.select();
+  }
+});
+$('#powerLogin').onclick = () => runBoot();
+
+/* ================= DESKTOP estilo Windows 10 ================= */
+const desk = $('#desktop'), startmenu = $('#startmenu');
+function enterDesktop() {
+  hide($('#login')); show(desk); loginActive = false; setTimeout(renderMonitor, 50);
+  $('#loginBox').style.opacity = 1; mood = 'normal'; pass.value = '';
+  setTimeout(() => $('#toast').classList.add('show'), 900);
+  setTimeout(() => $('#toast').classList.remove('show'), 7500);
+}
+const APPS = {
+  browser: { name: 'Navegador', icon: 'globe', body: `<h2>Navegador (Chromium)</h2>Web apps e PWAs instalam direto no menu Iniciar e na barra de tarefas, como no FydeOS.<ul><li>Sincronização de favoritos e senhas</li><li>Instalar site como app: ⋮ → Instalar</li></ul>` },
+  files: { name: 'Arquivos', icon: 'folder', body: `<h2>Arquivos</h2>Gerenciador de arquivos (Dolphin) com abas, painel lateral estilo Explorer e acesso às pastas compartilhadas com os apps Android.` },
+  android: { name: 'Apps Android', icon: 'phone', body: `<h2>Apps Android</h2>Subsistema Android integrado (Waydroid). Cada app Android abre numa janela própria, lado a lado com os apps Linux e web.<ul><li>Primeiro uso: <code>capix-android-setup</code> baixa a imagem do Android</li><li>Instale APKs ou use uma loja alternativa (F-Droid, Aurora)</li></ul>` },
+  store: { name: 'Loja Capix', icon: 'bag', body: `<h2>Loja Capix</h2>Discover com Flathub já configurado: milhares de apps Linux em sandbox, atualizados automaticamente em segundo plano.` },
+  terminal: { name: 'Terminal', icon: 'terminal', body: `<h2 style="font-family:monospace">capix@capivara:~$</h2><code>bootc status</code> mostra a imagem atual do sistema.<br><code>sudo bootc rollback</code> volta para a versão anterior.<br><code>toolbox enter</code> abre um ambiente mutável para desenvolvimento.` },
+  office: { name: 'Escritório', icon: 'doc', body: `<h2>Escritório</h2>LibreOffice (via Flatpak) para documentos, planilhas e apresentações, compatível com arquivos do Microsoft Office.` },
+  settings: { name: 'Capix Central', icon: 'gear', central: 'inicio' },
+  central: { name: 'Capix Central', icon: 'capy', central: 'inicio' },
+  welcome: { name: 'Bem-vindo ao Capix', icon: 'capy', central: 'welcome' },
+  wallpapers: { name: 'Papéis de parede', icon: 'pic', central: 'papeis' },
+  games: { name: 'Modo gamer', icon: 'game', central: 'jogos' },
+  trash: { name: 'Lixeira', icon: 'trash', body: `<h2>Lixeira</h2>A Lixeira está vazia.` },
+};
+// lista de apps alfabética
+const list = $('#applist');
+const groups = {};
+Object.entries(APPS).filter(([k]) => !['trash', 'central'].includes(k)).sort((a, b) => a[1].name.localeCompare(b[1].name)).forEach(([k, a]) => {
+  const L = a.name[0].toUpperCase(); (groups[L] ||= []).push([k, a]);
+});
+Object.entries(groups).forEach(([L, items]) => {
+  list.insertAdjacentHTML('beforeend', `<h6>${L}</h6>` + items.map(([k, a]) => `<div class="app" data-app="${k}"><div class="ic" data-icon="${a.icon}"></div>${a.name}</div>`).join(''));
+});
+paintIcons();
+
+let z = 10, openCount = 0;
+function openApp(key) {
+  const a = APPS[key]; if (!a) return;
+  startmenu.classList.remove('open');
+  const w = document.createElement('div');
+  w.className = 'win';
+  const off = (openCount++ % 6) * 28;
+  w.style.left = `calc(50% - 320px + ${off - 60}px)`; w.style.top = `calc(50% - 250px + ${off - 30}px)`; w.style.zIndex = ++z;
+  w.innerHTML = `<div class="bar"><div class="ttl"><div class="ic" data-icon="${a.icon}"></div>${a.name}</div><button>—</button><button>☐</button><button class="x">✕</button></div><div class="body">${a.body || ''}</div>`;
+  if (a.central) {
+    // Capix Central de verdade, rodando em modo demonstração
+    Object.assign(w.style, { width: '960px', height: '620px', left: `calc(50% - 480px + ${off - 40}px)`, top: `calc(50% - 340px + ${off - 20}px)` });
+    const body = w.querySelector('.body'); body.style.padding = '0';
+    const f = document.createElement('iframe');
+    f.style.cssText = 'width:100%;height:100%;border:0;display:block;background:#1c1410';
+    f.srcdoc = window.CAPIX_CENTRAL_HTML.replace('/*__START__*/', `window.CAPIX_START = ${JSON.stringify(a.central)};`);
+    body.appendChild(f);
+  }
+  $('#windows').appendChild(w); paintIcons(w);
+  const [mn, mx, x] = w.querySelectorAll('.bar button');
+  x.onclick = () => { w.remove(); markActive(); };
+  mn.onclick = () => { w.style.display = 'none'; };
+  mx.onclick = () => { const f = w.dataset.max === '1'; w.dataset.max = f ? '0' : '1'; Object.assign(w.style, f ? { width: '', height: '', left: w.dataset.l, top: w.dataset.t } : (w.dataset.l = w.style.left, w.dataset.t = w.style.top, { width: '100%', height: 'calc(100% - 48px)', left: 0, top: 0 })); };
+  w.addEventListener('mousedown', () => { w.style.zIndex = ++z; });
+  const bar = w.querySelector('.bar');
+  bar.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    const r = w.getBoundingClientRect(), ox = e.clientX - r.left, oy = e.clientY - r.top;
+    const mv = ev => { w.style.left = (ev.clientX - ox) + 'px'; w.style.top = Math.max(0, ev.clientY - oy) + 'px'; };
+    const up = () => { removeEventListener('mousemove', mv); removeEventListener('mouseup', up); };
+    addEventListener('mousemove', mv); addEventListener('mouseup', up);
+  });
+  w.dataset.app = key; markActive();
+}
+function markActive() {
+  const open = new Set($$('.win').map(w => w.dataset.app));
+  $$('.taskbar .tb[data-app]').forEach(b => b.classList.toggle('active', open.has(b.dataset.app)));
+}
+desk.addEventListener('click', e => {
+  const el = e.target.closest('.win') ? null : e.target.closest('[data-app]');
+  if (el && !el.classList.contains('dicon')) {
+    const existing = $$('.win').find(w => w.dataset.app === el.dataset.app);
+    if (existing && el.closest('.taskbar')) { existing.style.display = existing.style.display === 'none' ? '' : 'none'; existing.style.zIndex = ++z; return; }
+    openApp(el.dataset.app);
+  }
+  if (!e.target.closest('#startmenu') && !e.target.closest('#startBtn')) startmenu.classList.remove('open');
+  if (!e.target.closest('#powerBtn') && !e.target.closest('#powermenu')) $('#powermenu').classList.remove('open');
+});
+desk.addEventListener('dblclick', e => { const el = e.target.closest('.dicon'); if (el) openApp(el.dataset.app); });
+$('#startBtn').onclick = () => startmenu.classList.toggle('open');
+$('#search').onclick = () => startmenu.classList.add('open');
+$('#notifBtn').onclick = () => $('#toast').classList.toggle('show');
+$('#powerBtn').onclick = () => $('#powermenu').classList.toggle('open');
+$$('[data-power]').forEach(el => el.onclick = () => {
+  $$('.win').forEach(w => w.remove()); markActive(); startmenu.classList.remove('open'); $('#powermenu').classList.remove('open');
+  hide(desk);
+  if (el.dataset.power === 'reboot') runBoot();
+  else showLock();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Meta' && !desk.classList.contains('hidden')) { e.preventDefault(); startmenu.classList.toggle('open'); } });
+
+
+/* ================= Widget Capix Monitor (dados simulados na prévia) ================= */
+const MON = { hist: { cpu: [], gpu: [], down: [], up: [] }, t0: Date.now() };
+const walk = (v, step, lo, hi) => clamp(v + (Math.random() - .5) * step, lo, hi);
+let sim = { cores: Array.from({ length: 8 }, () => 10 + Math.random() * 20), mem: 5.6e9, gpu: 18, temp: 52, gtemp: 47, down: 2e5, up: 4e4, rd: 1e5, wr: 3e5, bat: 76 };
+function simMetrics() {
+  sim.cores = sim.cores.map(c => walk(c, 22, 2, 98));
+  sim.mem = walk(sim.mem, 1.5e8, 4.5e9, 9e9); sim.gpu = walk(sim.gpu, 14, 3, 95);
+  sim.temp = walk(sim.temp, 3, 42, 78); sim.gtemp = walk(sim.gtemp, 2, 40, 72);
+  sim.down = Math.random() < .2 ? 3e6 + Math.random() * 6e6 : walk(sim.down, 3e5, 1e4, 1.5e6); sim.up = walk(sim.up, 8e4, 5e3, 6e5);
+  sim.rd = walk(sim.rd, 4e5, 0, 4e6); sim.wr = walk(sim.wr, 6e5, 0, 8e6); sim.bat = Math.max(5, sim.bat - .01);
+  const cpu = sim.cores.reduce((a, b) => a + b) / sim.cores.length;
+  return { cpu: { model: 'AMD Ryzen 5 5600U with Radeon Graphics', usage: cpu, cores: sim.cores, freq: 2400 + cpu * 18, temp: sim.temp },
+    mem: { total: 16e9 * 1.0737, used: sim.mem, swap_total: 8.6e9, swap_used: 2.1e8 },
+    gpus: [{ name: 'AMD', usage: sim.gpu, temp: sim.gtemp, vram_used: 1.4e9 + sim.gpu * 1e7, vram_total: 2.1e9, power: 6 + sim.gpu / 8 }],
+    disks: [{ mount: '/', total: 512e9, used: 211e9 }, { mount: '/run/media/capix/Jogos', total: 1000e9, used: 640e9 }],
+    diskio: { read: sim.rd, write: sim.wr }, net: { down: sim.down, up: sim.up }, nvme_temp: 41,
+    battery: { percent: sim.bat, status: 'Discharging', watts: 9.8 }, load: [cpu / 25, 1.1, .9],
+    uptime: 3 * 3600 + 17 * 60 + (Date.now() - MON.t0) / 1000, nproc: 312,
+    procs: [{ name: 'chromium', cpu: 9 + Math.random() * 8, mem: 1.2e9 }, { name: 'plasmashell', cpu: 2 + Math.random() * 2, mem: 3.9e8 }, { name: 'kwin_wayland', cpu: 1.5 + Math.random() * 2, mem: 2.2e8 }, { name: 'waydroid', cpu: Math.random() * 3, mem: 6.1e8 }, { name: 'capix-central', cpu: Math.random(), mem: 4.1e7 }] };
+}
+const gbf = b => (b / 1073741824).toFixed(b >= 1e11 ? 0 : 1) + ' GB';
+const ratef = b => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB/s' : b >= 1024 ? (b / 1024).toFixed(0) + ' KB/s' : Math.round(b) + ' B/s';
+const lvl = v => v >= 90 ? '#FF6B5B' : v >= 70 ? '#FFB23D' : '#F68B2C';
+const uptf = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return (d ? d + 'd ' : '') + h + 'h ' + String(m).padStart(2, '0') + 'min'; };
+const barH = (v, c) => `<div class="bar"><i style="width:${clamp(v, 0, 100)}%;background:${c || lvl(v)}"></i></div>`;
+function spark(cv, a, c, b, c2, max) {
+  const r = devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight; cv.width = w * r; cv.height = h * r;
+  const x = cv.getContext('2d'); x.scale(r, r);
+  const mx = max || Math.max(1, ...a, ...(b || [])) * 1.15, step = w / 59;
+  const line = (arr, col, fill) => { if (arr.length < 2) return; const x0 = w - (arr.length - 1) * step; x.beginPath();
+    arr.forEach((v, i) => { const px = x0 + i * step, py = h - 1 - v / mx * (h - 2); i ? x.lineTo(px, py) : x.moveTo(px, py); });
+    x.strokeStyle = col; x.lineWidth = 1.6; x.stroke(); if (fill) { x.lineTo(w, h); x.lineTo(x0, h); x.closePath(); x.globalAlpha = .18; x.fillStyle = col; x.fill(); x.globalAlpha = 1; } };
+  line(a, c, true); if (b) line(b, c2, false);
+}
+function renderMonitor() {
+  if (desk.classList.contains('hidden')) return;
+  const m = simMetrics(), H = MON.hist, push = (k, v) => { H[k].push(v); if (H[k].length > 60) H[k].shift(); };
+  push('cpu', m.cpu.usage); push('gpu', m.gpus[0].usage); push('down', m.net.down); push('up', m.net.up);
+  const g = m.gpus[0], b = m.battery;
+  $('#monitor').innerHTML = `
+    <div class="hd"><img src="${window.CAPIX_ICON}" alt=""><b>Capix Monitor</b><span class="mu">ligado há ${uptf(m.uptime)}</span></div>
+    <div class="sec"><b>PROCESSADOR</b><span class="mu">${(m.cpu.freq / 1000).toFixed(2)} GHz</span></div>
+    <div class="row"><div class="big">${Math.round(m.cpu.usage)}%</div><div style="min-width:0"><div class="mu">${m.cpu.model}</div><div class="mu" style="color:${m.cpu.temp >= 70 ? '#FFB23D' : ''}">🌡 ${Math.round(m.cpu.temp)} °C</div></div></div>
+    <canvas id="spCpu"></canvas>
+    <div class="cores">${m.cpu.cores.map(c => `<div><i style="height:${c}%;background:${lvl(c)}"></i></div>`).join('')}</div>
+    <div class="sec"><b>MEMÓRIA</b><span class="mu">${gbf(m.mem.used)} de ${gbf(m.mem.total)}</span></div>${barH(m.mem.used / m.mem.total * 100)}
+    <div class="mu" style="margin-top:3px">Swap: ${gbf(m.mem.swap_used)} de ${gbf(m.mem.swap_total)}</div>
+    <div class="sec"><b>PLACA DE VÍDEO · ${g.name}</b><span class="mu">${Math.round(g.temp)} °C · ${Math.round(g.power)} W</span></div>
+    <div class="row"><span style="width:36px">${Math.round(g.usage)}%</span>${barH(g.usage)}</div><canvas id="spGpu" style="height:22px"></canvas>
+    <div class="mu">VRAM ${gbf(g.vram_used)} de ${gbf(g.vram_total)}</div>
+    <div class="sec"><b>ARMAZENAMENTO</b><span class="mu">↓ ${ratef(m.diskio.read)} ↑ ${ratef(m.diskio.write)}</span></div>
+    ${m.disks.map(d => `<div class="row" style="justify-content:space-between;margin-top:3px"><span>${d.mount === '/' ? 'Sistema' : d.mount.split('/').pop()}</span><span class="mu">${gbf(d.total - d.used)} livres de ${gbf(d.total)}</span></div>${barH(d.used / d.total * 100)}`).join('')}
+    <div class="mu" style="margin-top:3px">SSD: ${m.nvme_temp} °C</div>
+    <div class="sec"><b>REDE</b></div>
+    <div class="row" style="justify-content:space-between"><span style="color:#7CC74B">↓ ${ratef(m.net.down)}</span><span style="color:#5AB4FF">↑ ${ratef(m.net.up)}</span></div><canvas id="spNet"></canvas>
+    <div class="sec"><b>BATERIA</b><span class="mu">na bateria · ${b.watts.toFixed(1)} W</span></div>
+    <div class="row"><span style="width:36px">${Math.round(b.percent)}%</span>${barH(b.percent, b.percent < 20 ? '#FF6B5B' : '#7CC74B')}</div>
+    <div class="sec"><b>PROCESSOS</b><span class="mu">${m.nproc} em execução · carga ${m.load[0].toFixed(2)}</span></div>
+    ${m.procs.map(p => `<div class="pr"><span>${p.name}</span><span class="mu">${(p.mem / 1048576).toFixed(0)} MB</span><span>${p.cpu.toFixed(1)}%</span></div>`).join('')}
+    <div class="mu" style="text-align:right;margin-top:6px;font-size:10px;opacity:.7">by UnbugSTI</div>`;
+  spark($('#spCpu'), H.cpu, '#F68B2C', null, null, 100); spark($('#spGpu'), H.gpu, '#B07CFF', null, null, 100); spark($('#spNet'), H.down, '#7CC74B', H.up, '#5AB4FF', 0);
+}
+setInterval(renderMonitor, 1500);
+
+// a galeria da Capix Central troca o papel de parede da prévia
+addEventListener('message', e => {
+  const id = e.data && e.data.capixWallpaper; if (!id) return;
+  const url = id === 'capix' ? null : window.CAPIX_WALLS[id];
+  $$('#desktop .wall, #lock .wall, #login .wall').forEach(el => el.style.backgroundImage = url ? `url(${url})` : '');
+});
+
+runBoot();
+})();
+</script>
+</body>
+</html>

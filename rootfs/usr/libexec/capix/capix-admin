@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""
+capix-admin — ações administrativas do Capix Central (executado como root via pkexec).
+Só aceita verbos e argumentos de uma lista fechada; nada vindo da interface vira comando livre.
+
+  capix-admin update-now
+  capix-admin rollback
+  capix-admin auto-updates on|off
+  capix-admin android-init GAPPS|VANILLA
+  capix-admin android-remove
+  capix-admin flatpak-install <id da lista permitida>
+  capix-admin flatpak-remove  <id da lista permitida>
+  capix-admin av-scan
+  capix-admin av-update
+  capix-admin kiosk-enable <url http(s)>
+  capix-admin kiosk-disable
+  capix-admin vpn-import <arquivo .conf>
+  capix-admin vpn-up|vpn-down <nome da VPN>
+  capix-admin usbguard on|off
+"""
+import os, re, subprocess, sys, pwd, shutil
+
+DRY = os.environ.get("CAPIX_DRYRUN") == "1"
+APPS_LIST = "/usr/share/capix/apps.list"
+if DRY:  # só em simulação (pkexec limpa o ambiente de qualquer forma)
+    APPS_LIST = os.environ.get("CAPIX_APPS", APPS_LIST)
+KIOSK_USER = "quiosque"
+KIOSK_CONF = "/etc/capix/kiosk.conf"
+SDDM_KIOSK = "/etc/sddm.conf.d/90-capix-kiosk.conf"
+
+
+def die(msg, code=2):
+    print(f"erro: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def run(*cmd, check=True):
+    print("$ " + " ".join(cmd), flush=True)
+    if DRY:
+        return 0
+    r = subprocess.run(cmd)
+    if check and r.returncode != 0:
+        die(f"comando falhou ({r.returncode}): {cmd[0]}", r.returncode)
+    return r.returncode
+
+
+def nm_connections():
+    try:
+        out = subprocess.run(["/usr/bin/nmcli", "-t", "-f", "NAME", "connection", "show"], capture_output=True, text=True, timeout=5).stdout
+        return set(l.strip() for l in out.splitlines() if l.strip())
+    except Exception:
+        return set()
+
+
+def allowed_apps():
+    ids = set()
+    try:
+        with open(APPS_LIST) as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip()
+                if line:
+                    ids.add(line.split("|")[0].strip())
+    except FileNotFoundError:
+        pass
+    return ids
+
+
+def write(path, text, mode=0o644):
+    print(f"# escrevendo {path}", flush=True)
+    if DRY:
+        return
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        f.write(text)
+    os.chmod(path, mode)
+
+
+def main(argv):
+    if not argv:
+        die("nenhuma ação")
+    verb, args = argv[0], argv[1:]
+
+    if verb == "update-now":
+        run("/usr/bin/bootc", "upgrade")
+        run("/usr/bin/flatpak", "update", "--system", "--noninteractive", "--assumeyes", check=False)
+        print("Atualização preparada. Ela entra em vigor quando você reiniciar.")
+
+    elif verb == "rollback":
+        run("/usr/bin/bootc", "rollback")
+        print("Pronto: a versão anterior será usada no próximo reinício.")
+
+    elif verb == "auto-updates":
+        if args not in (["on"], ["off"]):
+            die("use on|off")
+        run("/usr/bin/systemctl", "enable" if args[0] == "on" else "disable", "--now", "capix-update.timer")
+
+    elif verb == "android-init":
+        if args not in (["GAPPS"], ["VANILLA"]):
+            die("use GAPPS|VANILLA")
+        run("/usr/bin/waydroid", "init", "-f", "-s", args[0])
+        run("/usr/bin/systemctl", "enable", "--now", "waydroid-container.service")
+
+    elif verb == "android-remove":
+        run("/usr/bin/systemctl", "disable", "--now", "waydroid-container.service", check=False)
+        for d in ("/var/lib/waydroid", "/etc/waydroid-extra"):
+            print(f"# removendo {d}", flush=True)
+            if not DRY and os.path.isdir(d):
+                shutil.rmtree(d)
+
+    elif verb in ("flatpak-install", "flatpak-remove"):
+        if len(args) != 1 or args[0] not in allowed_apps():
+            die("app fora da lista permitida")
+        if verb == "flatpak-install":
+            run("/usr/bin/flatpak", "install", "--system", "--noninteractive", "--assumeyes", "flathub", args[0])
+        else:
+            run("/usr/bin/flatpak", "uninstall", "--system", "--noninteractive", "--assumeyes", args[0])
+
+    elif verb == "av-update":
+        run("/usr/bin/freshclam", "--quiet", check=False)
+
+    elif verb == "av-scan":
+        run("/usr/bin/systemctl", "start", "--no-block", "capix-antivirus.service")
+        print("Verificação iniciada em segundo plano.")
+
+    elif verb == "kiosk-enable":
+        if len(args) != 1 or not re.fullmatch(r"https?://[^\s\"'`$\\]{1,2000}", args[0]):
+            die("endereço inválido (use http:// ou https://)")
+        url = args[0]
+        try:
+            pwd.getpwnam(KIOSK_USER)
+        except KeyError:
+            run("/usr/sbin/useradd", "--create-home", "--comment", "Quiosque Capix", "--shell", "/bin/bash", KIOSK_USER)
+            run("/usr/bin/passwd", "--lock", KIOSK_USER)   # sem senha: só entra pelo autologin do quiosque
+        write(KIOSK_CONF, f'URL="{url}"\n')
+        write(SDDM_KIOSK, f"[Autologin]\nUser={KIOSK_USER}\nSession=capix-kiosk\nRelogin=true\n")
+        print("Modo quiosque ativado. Reinicie para entrar no quiosque.")
+
+    elif verb == "kiosk-disable":
+        for p in (SDDM_KIOSK, KIOSK_CONF):
+            print(f"# removendo {p}", flush=True)
+            if not DRY and os.path.exists(p):
+                os.remove(p)
+        print("Modo quiosque desativado.")
+
+    elif verb == "vpn-import":
+        # importa um perfil WireGuard (.conf) para o NetworkManager
+        if len(args) != 1 or not re.fullmatch(r"[A-Za-z0-9._/ \-]{1,400}\.conf", args[0]) or ".." in args[0] or not os.path.isfile(args[0]):
+            die("arquivo .conf inválido")
+        run("/usr/bin/nmcli", "connection", "import", "type", "wireguard", "file", args[0])
+        print("VPN importada.")
+
+    elif verb in ("vpn-up", "vpn-down"):
+        # liga/desliga uma conexão já existente, pelo nome exato (sem espaço para injeção)
+        if len(args) != 1 or len(args[0]) > 100 or re.search(r"[\x00-\x1f;|&$`\"'\\<>]", args[0]):
+            die("nome de VPN inválido")
+        if not DRY and args[0] not in nm_connections():
+            die("VPN desconhecida")
+        run("/usr/bin/nmcli", "connection", "up" if verb == "vpn-up" else "down", "id", args[0])
+
+    elif verb == "usbguard":
+        # proteção contra dispositivos USB desconhecidos
+        if args not in (["on"], ["off"]):
+            die("use on|off")
+        if args[0] == "on":
+            if not DRY and not os.path.exists("/etc/usbguard/rules.conf"):
+                run("/bin/sh", "-c", "usbguard generate-policy > /etc/usbguard/rules.conf")
+                run("/usr/bin/chmod", "0600", "/etc/usbguard/rules.conf")
+            run("/usr/bin/systemctl", "enable", "--now", "usbguard.service")
+        else:
+            run("/usr/bin/systemctl", "disable", "--now", "usbguard.service", check=False)
+
+    else:
+        die(f"ação desconhecida: {verb}")
+
+
+if __name__ == "__main__":
+    if os.geteuid() != 0 and not DRY:
+        die("precisa ser executado como root (via pkexec)")
+    main(sys.argv[1:])

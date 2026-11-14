@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Capix Central</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{--bg:#1b1b1d;--panel:#202023;--card:#2a2a2e;--card2:#333338;--line:#3e3e44;--txt:#f2f2f2;--mut:#a9a9b0;
+        --acc:#F68B2C;--acc2:#ff9d45;--ok:#6BB33F;--warn:#ffb23d;--bad:#ff6b5b;
+        --font:"Inter","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--txt);font:14px/1.5 var(--font)}
+  button{font:inherit;color:inherit}
+  .app{display:flex;height:100%}
+  nav{width:280px;background:var(--panel);padding:16px 0;display:flex;flex-direction:column;flex:none}
+  .brand{display:flex;align-items:center;gap:12px;padding:4px 20px 18px}
+  .brand img{width:42px;height:42px}
+  .brand b{font-size:18px;font-weight:600;display:block;line-height:1.1}
+  .brand small{color:var(--mut);font-size:12px}
+  .search{margin:0 16px 12px;position:relative}
+  .search input{width:100%;height:34px;border:1px solid var(--line);border-bottom:2px solid var(--acc);background:#151517;color:var(--txt);padding:0 10px 0 32px;font:inherit;outline:none}
+  .search svg{position:absolute;left:9px;top:9px;width:16px;color:var(--mut)}
+  .navi{display:flex;align-items:center;gap:14px;padding:0 20px;height:42px;cursor:pointer;border-left:4px solid transparent;color:var(--txt);background:none;border-top:0;border-right:0;border-bottom:0;width:100%;text-align:left}
+  .navi:hover{background:rgba(255,255,255,.06)}
+  .navi.on{border-left-color:var(--acc);background:rgba(246,139,44,.12)}
+  .navi svg{width:18px;height:18px;flex:none}
+  main{flex:1;overflow:auto;padding:28px 40px 60px}
+  h1{font-size:28px;font-weight:300;margin-bottom:18px}
+  h2{font-size:17px;font-weight:600;margin:26px 0 10px}
+  .muted{color:var(--mut)}
+  .card{background:var(--card);padding:16px 18px;margin-bottom:8px;display:flex;align-items:center;gap:16px}
+  .card .ic{width:36px;height:36px;flex:none;display:grid;place-items:center;background:var(--card2);border-radius:4px}
+  .card .ic svg{width:20px;height:20px;color:var(--acc)}
+  .card .tx{flex:1;min-width:0}
+  .card .tx b{display:block;font-weight:500}
+  .card .tx span{color:var(--mut);font-size:13px}
+  .btn{height:32px;padding:0 16px;border:1px solid transparent;background:var(--card2);cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:var(--mut)}
+  .btn.pri{background:var(--acc);color:#1b120d;font-weight:600}
+  .btn.pri:hover{background:var(--acc2);border-color:transparent}
+  .btn.dng{background:#5a2a26}
+  .btn:disabled{opacity:.45;cursor:default}
+  .tog{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+  .tog i{width:44px;height:20px;border:2px solid var(--mut);border-radius:10px;position:relative;transition:.15s}
+  .tog i::after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:var(--mut);top:3px;left:4px;transition:.15s}
+  .tog.on i{background:var(--acc);border-color:var(--acc)}
+  .tog.on i::after{left:26px;background:#1b120d}
+  .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:var(--card2)}
+  .pill.ok{background:rgba(107,179,63,.2);color:#a8e07e}.pill.warn{background:rgba(255,178,61,.18);color:#ffd08a}.pill.bad{background:rgba(255,107,91,.18);color:#ffb0a6}
+  .hero{display:flex;align-items:center;gap:22px;background:linear-gradient(120deg,#34302e,#242427 60%);padding:22px;margin-bottom:18px}
+  .hero img{width:84px;height:84px}
+  .hero h1{margin:0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+  .tile{background:var(--card);padding:16px;cursor:pointer;border:1px solid transparent;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:110px}
+  .tile:hover{border-color:var(--line);background:var(--card2)}
+  .tile svg{width:26px;height:26px;color:var(--acc)}
+  .tile b{font-weight:500}.tile span{color:var(--mut);font-size:13px}
+  .walls{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .wall{background:none;border:3px solid transparent;padding:0;cursor:pointer;text-align:left}
+  .wall img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+  .wall span{display:block;padding:6px 2px;font-size:13px}
+  .wall:hover{border-color:var(--line)}
+  .wall.on{border-color:var(--acc)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input[type=url]{height:32px;min-width:340px;flex:1;background:#151517;border:1px solid var(--line);border-bottom:2px solid var(--acc);color:var(--txt);padding:0 10px;font:inherit;outline:none}
+  dl{display:grid;grid-template-columns:180px 1fr;gap:6px 16px;background:var(--card);padding:16px 18px}
+  dt{color:var(--mut)}
+  /* diálogo de tarefa */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;place-items:center;z-index:50}
+  .modal.open{display:grid}
+  .dlg{width:min(620px,92vw);background:var(--panel);border-top:3px solid var(--acc);padding:22px 24px}
+  .dlg h3{font-weight:400;font-size:20px;margin-bottom:10px}
+  .dlg pre{background:#131315;color:#d0d0d4;font:12px/1.45 ui-monospace,Consolas,monospace;padding:10px;height:200px;overflow:auto;white-space:pre-wrap}
+  .dlg .row{justify-content:flex-end;margin-top:14px}
+  .spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--acc);border-radius:50%;animation:sp 1s linear infinite;display:inline-block;vertical-align:-4px;margin-right:8px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  /* assistente de boas-vindas */
+  .wiz{position:fixed;inset:0;background:radial-gradient(circle at 70% 20%,#3b3430,#141416 70%);display:none;z-index:40}
+  .wiz.open{display:flex;align-items:center;justify-content:center}
+  .wbox{width:min(760px,94vw);min-height:460px;background:rgba(34,34,37,.94);padding:34px 40px;display:flex;flex-direction:column}
+  .wbox h1{font-size:32px}
+  .wbody{flex:1}
+  .steps{display:flex;gap:6px;margin-bottom:22px}
+  .steps i{height:4px;flex:1;background:var(--line)}.steps i.on{background:var(--acc)}
+  .choice{display:flex;gap:14px;align-items:flex-start;background:var(--card);padding:14px 16px;margin-bottom:8px;cursor:pointer;border:2px solid transparent}
+  .choice:hover{background:var(--card2)}
+  .choice.on{border-color:var(--acc)}
+  .choice b{display:block;font-weight:500}.choice span{color:var(--mut);font-size:13px}
+  .choice input{margin-top:4px;accent-color:var(--acc);width:16px;height:16px}
+  .wnav{display:flex;justify-content:space-between;margin-top:22px}
+  .demo{position:fixed;right:10px;bottom:8px;font-size:11px;color:var(--mut);opacity:.7}
+  .hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav>
+    <div class="brand"><img class="logo-img" alt=""><div><b>Capix Central</b><small id="osname">Capix Linux OS</small></div></div>
+    <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><input id="q" placeholder="Localizar uma configuração"></div>
+    <div id="nav"></div>
+    <div style="margin-top:auto;padding:14px 20px 0;color:var(--mut);font-size:11px;opacity:.7">Capix Linux OS · by UnbugSTI</div>
+  </nav>
+  <main id="main"></main>
+</div>
+
+<div class="modal" id="modal"><div class="dlg">
+  <h3 id="mtitle">Trabalhando…</h3>
+  <p class="muted" id="mstate"><span class="spin"></span>Isso pode levar alguns minutos.</p>
+  <pre id="mlog"></pre>
+  <div class="row"><button class="btn" id="mclose" disabled>Fechar</button></div>
+</div></div>
+
+<div class="wiz" id="wiz"><div class="wbox">
+  <div class="steps" id="wsteps"></div>
+  <div class="wbody" id="wbody"></div>
+  <div class="wnav"><button class="btn" id="wback">Voltar</button><button class="btn pri" id="wnext">Avançar</button></div>
+</div></div>
+
+<div class="demo hidden" id="demo">modo de demonstração — nenhuma alteração é feita</div>
+
+<script>
+const DRY = __CAPIX_DRY__;
+/*__PREVIEW_MOCK__*/
+const asset = n => (window.CAPIX_ASSETS && CAPIX_ASSETS[n]) || ('assets/' + n);
+const BASE = location.pathname.replace(/[^/]*$/, '');
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const I = {
+  home:'<path d="M3 11l9-7 9 7v9h-6v-6H9v6H3z"/>',
+  upd:'<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>',
+  android:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',
+  apps:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+  ai:'<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>',
+  shield:'<path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  kiosk:'<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/>',
+  paint:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="16" cy="10" r="1.3"/><path d="M12 21c-1.5 0-2-1-2-2s1-1.5 2-1.5h1.5a2 2 0 0 0 2-2"/>',
+  wall:'<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="9" r="1.6"/>',
+  info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  wifi:'<path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  screen:'<rect x="2" y="4" width="20" height="13" rx="1"/><path d="M8 21h8"/>',
+  store:'<path d="M5 8h14l-1.5 13h-11z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  back:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/>',
+  save:'<path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-6h8v6"/>',
+  lock:'<rect x="4" y="10" width="16" height="11" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
+  vpn:'<path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12h6M12 9v6"/>',
+  key:'<circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v4M15 12v3"/>',
+  printer:'<path d="M7 8V3h10v5"/><rect x="3" y="8" width="18" height="9" rx="1"/><path d="M7 14h10v7H7z"/>',
+  profile:'<circle cx="9" cy="8" r="3.5"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M17 7l2 2 3-4M17 15h5"/>',
+  usb:'<path d="M12 21V4M12 4l-2 3h4z"/><path d="M12 14l4-3V8M16 8h2v2M12 11l-4-2V6M8 6H6v2"/>',
+  game:'<path d="M6 8h12a4 4 0 0 1 4 4v1a4 4 0 0 1-7 2.6L14 15h-4l-1 .6A4 4 0 0 1 2 13v-1a4 4 0 0 1 4-4z"/><path d="M7 11v3M5.5 12.5h3"/><circle cx="16" cy="11.5" r=".8"/><circle cx="18" cy="13.5" r=".8"/>',
+  cloud:'<path d="M7 18a5 5 0 1 1 1-9.9A6 6 0 0 1 19.5 10 4 4 0 0 1 18 18z"/>',
+  bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+  tv:'<rect x="2" y="5" width="20" height="13" rx="2"/><path d="M8 21h8"/>',
+};
+const icon = (k, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${I[k]}</svg>`;
+
+const PAGES = [
+  ['inicio','Início','home'],['atualizacoes','Atualizações e restauração','upd'],['android','Apps Android','android'],
+  ['apps','Apps recomendados','apps'],['jogos','Modo gamer','game'],['ia','Assistente de IA','ai'],['seguranca','Segurança','shield'],
+  ['backup','Backup','save'],['privacidade','Privacidade','lock'],['perfis','Perfis de trabalho','profile'],['impressoras','Impressoras e scanners','printer'],
+  ['papeis','Papéis de parede','wall'],['video','Placa de vídeo','screen'],['aparencia','Aparência','paint'],['quiosque','Modo quiosque','kiosk'],['sobre','Sobre','info'],
+];
+let S = null, page = 'inicio';
+
+async function api(path, opt) {
+  const r = await fetch(BASE + path, opt);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+async function load() { S = await api('api/status'); $('#osname').textContent = S.os.name; render(); }
+
+// executa uma ação e mostra o andamento
+async function run(action, args = [], title = 'Trabalhando…', quiet = false) {
+  let job;
+  try { job = (await api('api/run', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action, args }) })).job; }
+  catch (e) { alert(e.message); return false; }
+  if (quiet) { await waitJob(job); load(); return true; }
+  const m = $('#modal'); m.classList.add('open'); $('#mtitle').textContent = title; $('#mlog').textContent = '';
+  $('#mstate').innerHTML = '<span class="spin"></span>Isso pode levar alguns minutos.'; $('#mclose').disabled = true;
+  const j = await waitJob(job, log => { $('#mlog').textContent = log.join('\n'); $('#mlog').scrollTop = 1e9; });
+  $('#mstate').innerHTML = j.code === 0 ? '<span class="pill ok">Concluído</span>' : `<span class="pill bad">Não foi possível concluir (código ${j.code})</span>`;
+  $('#mclose').disabled = false; load(); return j.code === 0;
+}
+async function waitJob(id, onlog) {
+  for (;;) { const j = await api('api/job/' + id); onlog && onlog(j.log); if (j.done) return j; await new Promise(r => setTimeout(r, 500)); }
+}
+$('#mclose').onclick = () => $('#modal').classList.remove('open');
+
+const fmtMem = n => Math.round(n / 2**30) + ' GB';
+const fmtB = n => n >= 1e12 ? (n/1e12).toFixed(1)+' TB' : (n/1e9).toFixed(0)+' GB';
+const fmtD = t => t ? new Date(t * 1000).toLocaleDateString('pt-BR', { day:'numeric', month:'long', year:'numeric' }) : '—';
+const card = (ic, title, sub, right='') => `<div class="card"><div class="ic">${icon(ic)}</div><div class="tx"><b>${title}</b><span>${sub}</span></div>${right}</div>`;
+const tog = (id, on, label) => `<label class="tog ${on?'on':''}" data-tog="${id}"><i></i>${label ?? (on?'Ativado':'Desativado')}</label>`;
+const btn = (label, act, cls='', dis=false) => `<button class="btn ${cls}" data-act="${esc(act)}" ${dis?'disabled':''}>${label}</button>`;
+
+const VIEWS = {
+  inicio: () => `
+    <div class="hero"><img src="${asset('logo.png')}" alt=""><div><h1>Olá${S.user ? ', ' + esc(S.user) : ''}!</h1><span class="muted">${esc(S.os.name)} · sistema protegido e atualizado automaticamente</span></div></div>
+    <div class="grid">
+      ${[['atualizacoes','upd','Atualizações', S.updates.staged ? 'Nova versão pronta — reinicie' : 'Sistema em dia'],
+         ['android','android','Apps Android', S.android.initialized ? 'Ativados' : 'Toque para ativar'],
+         ['apps','apps','Apps recomendados', `${S.apps.filter(a=>a.installed).length} instalados`],
+         ['jogos','game','Modo gamer', S.gamer.on ? 'Ligado — bom jogo!' : 'Plataformas de jogos e desempenho'],
+         ['ia','ai','Assistente de IA','IA local e privada'],
+         ['seguranca','shield','Segurança', S.antivirus.infected ? 'Atenção: ameaças encontradas' : 'Nenhuma ameaça'],
+         ['backup','save','Backup', S.backup && S.backup.configurado ? (S.backup.ultimo ? 'Último: ' + S.backup.ultimo : 'Configurado') : 'Proteja seus arquivos'],
+         ['privacidade','lock','Privacidade', 'VPN, cofre de senhas e Tor'],
+         ['video','screen','Placa de vídeo', (S.gpu&&S.gpu.recomendacao&&S.gpu.recomendacao.nivel==='trocar-imagem') ? 'Driver NVIDIA recomendado' : 'Drivers e recursos 3D'],
+         ['papeis','wall','Papéis de parede', `${S.wallpapers.list.length} cenários em estilo anime`]]
+        .map(([p,ic,t,s]) => `<button class="tile" data-go="${p}">${icon(ic)}<b>${t}</b><span>${s}</span></button>`).join('')}
+    </div>
+    <h2>Atalhos</h2>
+    ${card('wifi','Rede e Internet','Wi-Fi, cabo, VPN', btn('Abrir','open:wifi'))}
+    ${card('screen','Telas','Resolução, escala, monitores', btn('Abrir','open:display'))}
+    ${card('user','Contas','Usuários e senhas', btn('Abrir','open:users'))}
+    ${card('store','Loja Capix','Milhares de apps do Flathub', btn('Abrir','open:store'))}
+    <p class="muted" style="margin-top:14px"><a href="#" data-act="welcome" style="color:var(--acc2)">Rever o assistente de boas-vindas</a></p>`,
+
+  atualizacoes: () => {
+    const u = S.updates;
+    return `<h1>Atualizações e restauração</h1>
+    ${card('upd', u.staged ? 'Nova versão pronta' : 'Você está em dia', u.staged ? `Versão ${esc(u.staged.version)} será aplicada quando você reiniciar.` : `Versão ${esc(u.booted?.version || '—')} · última verificação: ${esc(u.last_check || '—')}`,
+      btn('Verificar agora','admin:update-now','pri'))}
+    ${card('upd','Atualizações automáticas','O Capix baixa as novidades em segundo plano e aplica no próximo reinício, sem interromper você.', tog('auto-updates', u.auto))}
+    <h2>Restauração</h2>
+    ${card('back','Voltar para a versão anterior', u.rollback ? `Versão ${esc(u.rollback.version)} (${fmtD(u.rollback.date)}). Use se algo parou de funcionar depois de uma atualização.` : 'Nenhuma versão anterior disponível ainda.',
+      btn('Voltar versão','admin:rollback','dng', !u.rollback))}
+    <h2>Detalhes</h2>
+    <dl><dt>Versão em uso</dt><dd>${esc(u.booted?.version || '—')} (${fmtD(u.booted?.date)})</dd><dt>Imagem</dt><dd>${esc(u.booted?.image || '—')}</dd>
+    <dt>Sistema base</dt><dd>Somente leitura (protegido contra alterações)</dd></dl>`;
+  },
+
+  android: () => {
+    const a = S.android;
+    if (!a.installed) return `<h1>Apps Android</h1>${card('android','Subsistema Android não instalado','O pacote waydroid não está presente nesta imagem.')}`;
+    return `<h1>Apps Android</h1>
+    <p class="muted" style="margin-bottom:14px">Rode apps Android em janelas, lado a lado com os apps do Linux e da web.</p>
+    ${a.initialized ? card('android','Apps Android ativados', a.running ? 'O subsistema está rodando.' : 'Pronto para usar.', btn('Abrir Android','open:android','pri'))
+      : `<h2>Ativar</h2>
+      <div class="choice" data-act="admin:android-init:GAPPS"><input type="radio" name="g"><div><b>Com Google Play</b><span>Inclui os serviços do Google. Depois é preciso registrar o aparelho no Google para usar a Play Store.</span></div></div>
+      <div class="choice" data-act="admin:android-init:VANILLA"><input type="radio" name="g"><div><b>Sem Google (recomendado)</b><span>Mais leve e privado. Instale apps pelo F-Droid, Aurora Store ou arquivos APK.</span></div></div>
+      <p class="muted">O Capix vai baixar a imagem do Android (cerca de 1 GB).</p>`}
+    ${a.initialized ? `<h2>Gerenciar</h2>${card('back','Remover os apps Android','Apaga o subsistema e todos os apps e dados Android.', btn('Remover','admin:android-remove','dng'))}` : ''}`;
+  },
+
+  apps: () => `<h1>Apps recomendados</h1><p class="muted" style="margin-bottom:14px">Apps em sandbox do Flathub, atualizados automaticamente.</p>
+    ${[...new Set(S.apps.filter(a => a.cat !== 'Jogos').map(a => a.cat))].map(cat => `<h2>${esc(cat)}</h2>` + S.apps.filter(a => a.cat === cat).map(a =>
+      card('apps', esc(a.name), esc(a.desc), a.installed ? `<span class="pill ok">Instalado</span>${btn('Remover','admin:flatpak-remove:'+a.id)}` : btn('Instalar','admin:flatpak-install:'+a.id,'pri'))).join('')).join('')}
+    <p style="margin-top:16px">${btn('Abrir a Loja Capix para mais apps','open:store')}</p>`,
+
+  jogos: () => {
+    const g = S.gamer, games = S.apps.filter(a => a.cat === 'Jogos');
+    const prof = {performance:'Desempenho', balanced:'Equilibrado', 'power-saver':'Economia'}[g.profile] || g.profile || '—';
+    return `<h1>Modo gamer</h1>
+    <div class="hero" style="${g.on ? 'background:linear-gradient(120deg,#5a3418,#242427 70%)' : ''}"><div style="width:84px;height:84px;display:grid;place-items:center">${icon('game')}</div>
+      <div style="flex:1"><h1 style="font-size:24px">${g.on ? 'Modo gamer ligado' : 'Modo gamer'}</h1>
+      <span class="muted">Desempenho máximo do processador e da placa de vídeo, notificações silenciadas e atualizações e antivírus pausados enquanto você joga.</span></div>
+      ${tog('gamer', g.on, g.on ? 'Ligado' : 'Desligado')}</div>
+    ${card('bolt','Perfil de energia', `Agora: ${prof}. No modo gamer o Capix usa "Desempenho".`)}
+    ${card('game','Otimizações para jogos', `GameMode ${g.gamemode ? 'instalado' : 'ausente'} · MangoHud ${g.mangohud ? 'instalado' : 'ausente'}. Na Steam, use nas opções de lançamento do jogo: <code>gamemoderun mangohud %command%</code> para ver FPS e ganhar desempenho.`,
+      `<span class="pill ${g.gamemode ? 'ok' : 'warn'}">${g.gamemode ? 'Pronto' : 'Ausente'}</span>`)}
+    <h2>Plataformas de jogos</h2>
+    <div class="grid">${games.map(a => `<div class="tile" style="cursor:default">${icon('game')}<b>${esc(a.name)}</b><span>${esc(a.desc)}</span>
+      <div class="row" style="margin-top:auto">${a.installed ? btn('Jogar','app:'+a.id,'pri') + btn('Remover','admin:flatpak-remove:'+a.id) : btn('Instalar','admin:flatpak-install:'+a.id,'pri')}</div></div>`).join('')}</div>
+    <h2>Jogos na nuvem</h2>
+    <p class="muted" style="margin-bottom:8px">Jogue títulos pesados mesmo em computador simples: o jogo roda no servidor e chega por streaming. Precisa de conta no serviço e internet boa.</p>
+    <div class="grid">${g.cloud.map(c => `<button class="tile" data-act="cloud:${esc(c.id)}">${icon('cloud')}<b>${esc(c.name)}</b><span>${esc(c.desc)}</span></button>`).join('')}</div>
+    <h2>Modo console</h2>
+    ${card('tv','Capix Gamer (tela cheia, controle)', g.console_session
+      ? 'Na tela de login, clique no botão de sessão (canto inferior direito) e escolha <b>Capix Gamer (modo console)</b>: o computador abre direto na Steam em tela cheia, para jogar com controle na TV. Ao sair da Steam, volta para o login.'
+      : 'Sessão de console não disponível nesta imagem.')}`;
+  },
+
+  ia: () => {
+    const al = S.apps.find(a => a.id === 'com.jeffser.Alpaca');
+    return `<h1>Assistente de IA</h1>
+    <p class="muted" style="margin-bottom:14px">Converse, resuma textos e tire dúvidas com uma IA que roda <b>no seu computador</b>: nada do que você escreve sai da máquina.</p>
+    ${al?.installed ? card('ai','Alpaca está instalado','Na primeira vez, escolha e baixe um modelo (ex.: um modelo pequeno se o computador tiver pouca memória).', btn('Abrir assistente','open:assistant','pri'))
+      : card('ai','Instalar o assistente','Alpaca + Ollama, do Flathub (cerca de 500 MB, mais o modelo escolhido).', btn('Instalar','admin:flatpak-install:com.jeffser.Alpaca','pri'))}
+    ${card('info','Memória do computador', `${fmtMem(S.hardware.mem)} de RAM — ${S.hardware.mem >= 16e9 ? 'dá para usar modelos médios (7–8B).' : S.hardware.mem >= 8e9 ? 'use modelos pequenos (até ~4B).' : 'use modelos bem pequenos (1–2B).'}`)}`;
+  },
+
+  seguranca: () => {
+    const v = S.antivirus;
+    return `<h1>Segurança</h1>
+    ${card('shield','Proteção do sistema','Arquivos do sistema são somente leitura e verificados a cada atualização.','<span class="pill ok">Ativa</span>')}
+    ${card('shield','Firewall', S.firewall ? 'Conexões de entrada não solicitadas são bloqueadas.' : 'O firewall está desligado.', `<span class="pill ${S.firewall?'ok':'warn'}">${S.firewall?'Ativo':'Desligado'}</span>`)}
+    <h2>Antivírus</h2>
+    ${card('shield', v.running ? 'Verificando…' : v.infected ? `${v.infected} ameaça(s) encontrada(s)` : 'Nenhuma ameaça encontrada',
+      `Última verificação: ${esc(v.last || 'nunca')}${v.scanned ? ` · ${v.scanned.toLocaleString('pt-BR')} arquivos` : ''}`,
+      btn('Verificar agora','admin:av-scan','pri', v.running))}
+    ${card('upd','Atualizar definições de vírus','Baixa as assinaturas mais recentes do ClamAV.', btn('Atualizar','admin:av-update'))}
+    <h2>Investigação</h2>
+    ${card('shield','Capix Faro','Investigue domínios, IPs, links, arquivos e e-mails suspeitos e registre os achados em casos.', btn('Abrir','open:faro','pri'))}
+    ${card('shield','Verificação semanal automática','Verifica a pasta pessoal uma vez por semana, em segundo plano.', `<span class="pill ${v.auto?'ok':'warn'}">${v.auto?'Ativa':'Desligada'}</span>`)}`;
+  },
+
+  papeis: () => `<h1>Papéis de parede</h1>
+    <p class="muted" style="margin-bottom:14px">Cenários originais em estilo anime feitos para o Capix. Clique para aplicar.</p>
+    <div class="walls">${S.wallpapers.list.map(w => `<button class="wall ${S.wallpapers.current===w.id?'on':''}" data-act="wallpaper:${esc(w.id)}"><img src="${asset('wp-' + w.id + '.png')}" alt=""><span>${esc(w.name)}</span></button>`).join('')}</div>
+    <h2>Mais opções</h2>
+    ${card('store','Baixar mais','Abre a loja de papéis de parede do KDE, com milhares de wallpapers da comunidade (inclusive de anime).', btn('Baixar mais','wallpaper-get','pri'))}
+    ${card('wall','Usar uma imagem minha','Escolha uma foto ou imagem do seu computador.', btn('Escolher imagem','wallpaper-own'))}`,
+
+  backup: () => {
+    const b = S.backup || {};
+    const gb = n => n == null ? '—' : n >= 1e12 ? (n/1e12).toFixed(1)+' TB' : (n/1e9).toFixed(0)+' GB';
+    return `<h1>Backup</h1>
+    <p class="muted">Cópias de segurança da sua pasta pessoal. Cada cópia guarda só o que mudou, então ocupa pouco espaço. Guarde num disco externo.</p>
+    ${!b.configurado ? card('save','Escolha onde guardar','Selecione uma pasta, de preferência num HD ou pendrive.', btn('Escolher destino','backup-pick-dest','pri'))
+      : card('save', b.disponivel ? 'Destino pronto' : 'Destino indisponível', b.disponivel
+          ? `${esc(b.dest)}${b.disco ? ` · ${gb(b.disco.livre)} livres de ${gb(b.disco.total)}` : ''}`
+          : `${esc(b.dest)} — conecte o disco para fazer backup.`, btn('Trocar','backup-pick-dest'))}
+    ${b.configurado ? card('upd', b.rodando ? 'Fazendo backup…' : (b.ultimo ? 'Último backup: ' + esc(b.ultimo) : 'Nenhum backup ainda'),
+      b.ok === false ? 'O último backup não terminou bem — verifique o disco.' : 'As cópias são incrementais e rápidas.',
+      btn(b.rodando ? 'Em andamento…' : 'Fazer backup agora','backup-run','pri', b.rodando || !b.disponivel)) : ''}
+    ${b.configurado ? card('save','Backup automático diário','Uma cópia por dia, em segundo plano, quando o disco estiver conectado.', tog('backup-auto', b.auto)) : ''}
+    ${(b.snapshots && b.snapshots.length) ? `<h2>Cópias guardadas (${b.snapshots.length})</h2>` + b.snapshots.map(s => card('save', esc(s.quando), `<span class="mono">${esc(s.nome)}</span>`)).join('') : ''}
+    ${b.configurado ? `<div class="note">Para restaurar: abra os Arquivos no destino do backup, entre na cópia desejada e copie de volta o que precisar. O sistema em si já tem recuperação própria em Atualizações → Restauração.</div>` : ''}`;
+  },
+
+  privacidade: () => {
+    const p = S.privacy || {};
+    return `<h1>Privacidade e segurança</h1>
+    <p class="muted">Proteja sua conexão e seus dados. Tudo roda no seu computador.</p>
+    <h2>VPN</h2>
+    <p class="muted" style="margin-bottom:8px">Importe um perfil WireGuard (arquivo <span class="mono">.conf</span>) do seu provedor de VPN e ligue quando quiser.</p>
+    ${(p.vpns && p.vpns.length) ? p.vpns.map(v => card('vpn', esc(v.nome), v.ativa ? '<span class="pill ok">conectada</span>' : 'desconectada',
+        v.ativa ? btn('Desligar','vpn-down:'+v.nome,'dng') : btn('Ligar','vpn-up:'+v.nome,'pri'))).join('') : card('vpn','Nenhuma VPN importada','Adicione um arquivo de configuração WireGuard.')}
+    ${card('vpn','Importar VPN','Escolha um arquivo .conf do seu provedor (Proton VPN, Mullvad, sua empresa…).', btn('Importar .conf','vpn-import'))}
+    <h2>Cofre de senhas</h2>
+    ${p.cofre_instalado ? card('key','Cofre de senhas instalado','Guarde suas senhas com segurança.', btn('Abrir','open:keepass'))
+      : card('key','Instalar cofre de senhas','KeePassXC: guarda suas senhas criptografadas, só no seu computador.', btn('Instalar','admin:flatpak-install:org.keepassxc.KeePassXC','pri'))}
+    <h2>Navegação anônima</h2>
+    ${p.tor_instalado ? card('shield','Tor Browser instalado','Navegação anônima pela rede Tor.', btn('Abrir','open:tor'))
+      : card('shield','Instalar o Tor Browser','Navegue sem revelar seu IP, pela rede Tor.', btn('Instalar','admin:flatpak-install:org.torproject.torbrowser-launcher','pri'))}
+    <h2>Proteções do sistema</h2>
+    ${card('shield','Firewall', p.firewall ? 'Conexões de entrada não solicitadas são bloqueadas.' : 'O firewall está desligado.', `<span class="pill ${p.firewall?'ok':'warn'}">${p.firewall?'Ativo':'Desligado'}</span>`)}
+    ${p.usbguard && p.usbguard.disponivel ? card('usb','Proteção contra dispositivos USB', p.usbguard.ativo
+        ? 'Dispositivos USB novos são bloqueados até você autorizar. Bom para máquinas de trabalho.'
+        : 'Bloqueia pendrives e dispositivos USB desconhecidos até você autorizar.',
+        tog('usbguard', p.usbguard.ativo)) : ''}
+    ${card('lock','Triturar um arquivo','Apaga um arquivo sobrescrevendo os dados, sem chance de recuperação.', btn('Escolher arquivo','shred-file'))}`;
+  },
+
+  perfis: () => {
+    const p = S.profiles || {}, vpns = (S.privacy && S.privacy.vpns) || [], on = p.ativo === 'investigacao';
+    const tools = [['faro','Capix Faro','Ferramenta de investigação'],['keepass','Cofre de senhas','KeePassXC'],['descartavel','Navegador descartável','Não guarda nada e some ao fechar'],['tor','Tor Browser','Navegação anônima']];
+    return `<h1>Perfis de trabalho</h1>
+    <p class="muted">Troque o ambiente inteiro com um clique: o modo investigação liga a VPN e abre suas ferramentas; o modo pessoal desfaz tudo.</p>
+    <div class="hero" style="${on ? 'background:linear-gradient(120deg,#5a3418,#242427 70%)' : ''}"><div style="width:84px;height:84px;display:grid;place-items:center">${icon('profile')}</div>
+      <div style="flex:1"><h1 style="font-size:24px">${on ? 'Modo investigação ativo' : 'Modo pessoal'}</h1>
+      <span class="muted">${on ? 'VPN ligada e ferramentas abertas.' : 'Ambiente normal do dia a dia.'}</span></div>
+      ${on ? btn('Voltar ao modo pessoal','profile:pessoal') : btn('Ativar modo investigação','profile:investigacao','pri')}</div>
+    <h2>O que o modo investigação faz</h2>
+    <div class="card"><div class="ic">${icon('vpn')}</div><div class="tx"><b>Ligar esta VPN primeiro</b><span>Se a VPN não conectar, as ferramentas não abrem.</span></div>
+      <select id="pvpn" style="height:32px;background:#151517;border:1px solid var(--line);color:var(--txt);padding:0 8px"><option value="">Nenhuma</option>${vpns.map(v => `<option ${v.nome===p.vpn?'selected':''}>${esc(v.nome)}</option>`).join('')}</select></div>
+    ${tools.map(([id,t,d]) => `<label class="choice ${p.abrir.includes(id)?'on':''}"><input type="checkbox" data-ptool="${id}" ${p.abrir.includes(id)?'checked':''}><div><b>Abrir ${t}</b><span>${d}</span></div></label>`).join('')}
+    <div class="row" style="margin-top:8px">${btn('Salvar configuração','profile-save','pri')}</div>
+    <h2>Navegador descartável</h2>
+    ${card('shield','Abrir uma janela descartável','Perfil temporário na memória: sem histórico, cookies ou extensões. Tudo é apagado ao fechar. Use para abrir links suspeitos.', btn('Abrir','open:descartavel'))}`;
+  },
+
+  impressoras: () => {
+    const p = S.printers || {}, l = p.lista || [];
+    return `<h1>Impressoras e scanners</h1>
+    <p class="muted">Impressoras modernas (Wi-Fi, rede ou USB com AirPrint/IPP) aparecem sozinhas, sem instalar driver.</p>
+    <h2>Impressoras</h2>
+    ${l.length ? l.map(x => card('printer', esc(x.nome.replace(/_/g,' ')) + (x.nome===p.padrao ? ' <span class="pill ok">padrão</span>' : ''), 'Estado: ' + esc(x.estado))).join('')
+      : card('printer','Nenhuma impressora encontrada', p.cups ? 'Ligue a impressora na mesma rede ou conecte o cabo USB.' : 'O serviço de impressão está desligado.')}
+    ${card('printer','Adicionar ou gerenciar impressoras','Adicionar manualmente, definir a padrão, ver a fila de impressão.', btn('Abrir','open:printers'))}
+    <h2>Scanner</h2>
+    ${card('printer','Digitalizar documentos e fotos', p.scan_app ? 'Scanners de rede e multifuncionais são detectados automaticamente.' : 'Aplicativo de digitalização ausente nesta imagem.', btn('Digitalizar','open:scan','pri', !p.scan_app))}`;
+  },
+
+  video: () => {
+    const g = S.gpu || {}, list = g.gpus || [];
+    const pill = (txt, cls='') => `<span class="pill ${cls}">${esc(txt)}</span>`;
+    const drvTxt = d => d === 'nouveau' ? 'nouveau (aberto, básico)' : d === 'nvidia' ? 'NVIDIA (proprietário)' : d || '—';
+    const rec = g.recomendacao;
+    const vk = (g.vulkan && g.vulkan.length) ? g.vulkan.map(esc).join('<br>') : '<span class="muted">não disponível</span>';
+    return `<h1>Placa de vídeo</h1>
+    <p class="muted">Placas AMD e Intel funcionam de fábrica. Para placas NVIDIA, o Capix tem uma imagem com o driver proprietário já embutido.</p>
+    ${rec ? `<div class="card" style="display:block;border-left:3px solid var(--${rec.nivel==='trocar-imagem'?'acc':'warn'})">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><div class="ic">${icon('screen')}</div><b>${rec.nivel==='trocar-imagem'?'Driver NVIDIA recomendado':'Observação'}</b></div>
+      <p style="margin-bottom:10px">${esc(rec.texto)}</p>
+      <div style="display:flex;gap:8px;align-items:center"><code style="flex:1;background:#151517;padding:9px 11px;border-radius:2px">${esc(rec.comando)}</code>${btn('Copiar', '', 'pri').replace('data-act=""','data-copy="'+esc(rec.comando)+'"')}</div>
+      <p class="muted" style="font-size:12px;margin-top:8px">Rode esse comando num terminal e reinicie. Dá para voltar atrás em Atualizações → Restauração.</p></div>` : ''}
+    <h2>Placas detectadas</h2>
+    ${list.length ? list.map(x => card('screen', `${esc(x.name)} ${pill(x.vendor, x.vendor==='NVIDIA'?'ok':x.vendor==='AMD'?'warn':'')}`, `Driver em uso: ${drvTxt(x.driver)} · ${esc(x.slot)}`)).join('') : card('screen','Nenhuma placa detectada','Em uma máquina virtual, use o driver padrão.')}
+    <h2>Recursos de vídeo</h2>
+    <dl><dt>Imagem do sistema</dt><dd>${g.variante==='nvidia'?'Capix NVIDIA (driver proprietário)':'Capix aberta (AMD/Intel, Mesa)'}</dd>
+    <dt>Vulkan (jogos e 3D)</dt><dd>${vk}</dd>
+    <dt>Decodificação de vídeo</dt><dd>${g.vaapi?esc(g.vaapi):'<span class="muted">—</span>'}</dd></dl>
+    <p class="muted" style="margin-top:8px">Mesa, Vulkan (64 e 32 bits) e decodificação de vídeo por hardware já vêm instalados para AMD e Intel.</p>`;
+  },
+
+  aparencia: () => `<h1>Aparência</h1>
+    <h2>Escolha o modo</h2>
+    <div class="grid">
+      <button class="tile" data-act="theme:dark" style="${S.appearance.dark?'border-color:var(--acc)':''}"><b>Escuro</b><span>Fundo escuro com destaque laranja</span></button>
+      <button class="tile" data-act="theme:light" style="${!S.appearance.dark?'border-color:var(--acc)':''}"><b>Claro</b><span>Fundo claro com destaque laranja</span></button>
+    </div>
+    <h2>Mais</h2>
+    ${card('paint','Cores, ícones e fontes','Personalização completa do Plasma.', btn('Abrir','open:settings'))}`,
+
+  quiosque: () => {
+    const k = S.kiosk;
+    return `<h1>Modo quiosque</h1>
+    <p class="muted" style="margin-bottom:14px">Transforma este computador num totem: ao ligar, entra automaticamente num usuário restrito e mostra só uma página da web em tela cheia. Ideal para recepção, painéis e cardápios.</p>
+    ${k.enabled ? card('kiosk','Quiosque ativado', `Página: ${esc(k.url)}`, btn('Desativar','admin:kiosk-disable','dng'))
+      : `<div class="card" style="flex-wrap:wrap"><div class="ic">${icon('kiosk')}</div><div class="tx"><b>Página a exibir</b><span>Endereço completo, começando com https://</span></div>
+         <div class="row" style="width:100%"><input type="url" id="kurl" placeholder="https://exemplo.com.br/painel" value="${esc(k.url)}">${btn('Ativar quiosque','kiosk-enable','pri')}</div></div>`}
+    <p class="muted" style="margin-top:10px">Para sair do quiosque: Ctrl+Alt+F3 abre um terminal de texto, onde um administrador pode entrar e rodar <code>sudo /usr/libexec/capix/capix-admin kiosk-disable</code>.</p>`;
+  },
+
+  sobre: () => {
+    const h = S.hardware;
+    return `<h1>Sobre</h1>
+    <div class="hero"><img src="${asset('logo.png')}" alt=""><div><h1 style="font-size:24px">${esc(S.os.name)}</h1><span class="muted">Apps web, Android e Linux num só sistema</span></div></div>
+    <dl><dt>Nome do computador</dt><dd>${esc(h.host)}</dd><dt>Processador</dt><dd>${esc(h.cpu)}</dd><dt>Memória</dt><dd>${fmtMem(h.mem)}</dd>
+    <dt>Armazenamento</dt><dd>${fmtB(h.disk_free)} livres de ${fmtB(h.disk_total)}</dd><dt>Kernel</dt><dd>${esc(h.kernel)} (${esc(h.arch)})</dd>
+    <dt>Versão do sistema</dt><dd>${esc(S.updates.booted?.version || S.os.version)}</dd><dt>Desenvolvido por</dt><dd>UnbugSTI (UnbugSolutions-TI)</dd></dl>`;
+  },
+};
+
+function render() {
+  $('#nav').innerHTML = PAGES.map(([id, label, ic]) => `<button class="navi ${id===page?'on':''}" data-go="${id}">${icon(ic)}${label}</button>`).join('');
+  $('#main').innerHTML = VIEWS[page]();
+}
+
+const LABELS = {
+  'update-now':'Procurando atualizações', 'rollback':'Voltando para a versão anterior', 'android-init':'Ativando os apps Android',
+  'android-remove':'Removendo os apps Android', 'flatpak-install':'Instalando', 'flatpak-remove':'Removendo', 'av-scan':'Iniciando a verificação',
+  'av-update':'Atualizando definições de vírus', 'kiosk-enable':'Ativando o modo quiosque', 'kiosk-disable':'Desativando o modo quiosque',
+};
+document.addEventListener('click', async e => {
+  const go = e.target.closest('[data-go]');
+  if (go) { page = go.dataset.go; try { history.replaceState(null, '', '#' + page); } catch (e) {} render(); $('#main').scrollTop = 0; return; }
+  const cp = e.target.closest('[data-copy]');
+  if (cp) { navigator.clipboard?.writeText(cp.dataset.copy); const o = cp.textContent; cp.textContent = 'Copiado!'; setTimeout(() => cp.textContent = o, 1500); return; }
+  const t = e.target.closest('[data-tog]');
+  if (t && t.dataset.tog === 'auto-updates') { await run('auto-updates', [S.updates.auto ? 'off' : 'on'], 'Alterando atualizações automáticas'); return; }
+  if (t && t.dataset.tog === 'gamer') { await run('gamer', [S.gamer.on ? 'off' : 'on'], '', true); return; }
+  if (t && t.dataset.tog === 'backup-auto') { await run('backup-auto', [S.backup.auto ? 'off' : 'on'], '', true); return; }
+  if (t && t.dataset.tog === 'usbguard') { await run('usbguard', [S.privacy.usbguard.ativo ? 'off' : 'on'], 'Alterando a proteção USB'); return; }
+  const a = e.target.closest('[data-act]');
+  if (!a || a.disabled) return;
+  e.preventDefault();
+  const [kind, verb, arg] = a.dataset.act.split(':');
+  if (kind === 'welcome') return openWizard();
+  if (kind === 'open') return run('open', [verb], '', true);
+  if (kind === 'theme') return run('theme', [verb], '', true);
+  if (kind === 'app') return run('open-app', [a.dataset.act.slice(4)], '', true);
+  if (kind === 'cloud') return run('open-cloud', [verb], '', true);
+  if (kind === 'wallpaper') { await run('wallpaper', [verb], '', true); S.wallpapers.current = verb; return render(); }
+  if (kind === 'wallpaper-get' || kind === 'wallpaper-own') return run(kind, [], '', true);
+  if (kind === 'profile') return run('profile', [verb], verb === 'investigacao' ? 'Ativando o modo investigação' : 'Voltando ao modo pessoal');
+  if (kind === 'profile-save') {
+    const itens = [...document.querySelectorAll('[data-ptool]:checked')].map(c => c.dataset.ptool).join(',');
+    await run('profile-config', [$('#pvpn').value, itens], '', true); a.textContent = 'Salvo ✓'; return;
+  }
+  if (kind === 'backup-run') return run('backup-run', [], 'Fazendo backup da sua pasta pessoal');
+  if (kind === 'backup-pick-dest' || kind === 'vpn-import' || kind === 'shred-file') return run(kind, [], '', true);
+  if (kind === 'vpn-up' || kind === 'vpn-down') return run(kind, [verb], (kind === 'vpn-up' ? 'Conectando à VPN' : 'Desconectando da VPN'));
+  if (kind === 'kiosk-enable') {
+    const url = $('#kurl').value.trim();
+    if (!/^https?:\/\/\S+$/.test(url)) { $('#kurl').focus(); return; }
+    return run('kiosk-enable', [url], LABELS['kiosk-enable']);
+  }
+  if (kind === 'admin') {
+    if (verb === 'rollback' && !confirm('Voltar para a versão anterior do sistema no próximo reinício?')) return;
+    if (verb === 'android-remove' && !confirm('Remover os apps Android e todos os dados deles?')) return;
+    const app = S.apps.find(x => x.id === arg);
+    return run(verb, arg ? [arg] : [], (LABELS[verb] || 'Trabalhando') + (app ? ' ' + app.name : '') + '…');
+  }
+});
+$('#q').addEventListener('input', e => {
+  const q = e.target.value.trim().toLowerCase(); if (!q) return;
+  const hit = PAGES.find(([id, label]) => (label + ' ' + id).toLowerCase().includes(q));
+  if (hit && hit[0] !== page) { page = hit[0]; render(); }
+});
+
+/* ---------------- Assistente de boas-vindas ---------------- */
+const W = { step: 0, android: 'skip', apps: new Set(), auto: true };
+const WSTEPS = [
+  () => `<div style="text-align:center;padding-top:10px"><img src="${asset('logo.png')}" style="width:150px" alt=""><h1 style="margin-top:14px">Bem-vindo ao Capix!</h1>
+    <p class="muted" style="max-width:520px;margin:0 auto">Vamos deixar tudo do seu jeito em poucos passos: apps Android, seus apps favoritos e as atualizações.</p></div>`,
+  () => `<h1>Apps Android</h1><p class="muted" style="margin-bottom:14px">Quer rodar apps Android no Capix?</p>
+    ${[['VANILLA','Sim, sem Google (recomendado)','Mais leve e privado. Instale pelo F-Droid, Aurora Store ou APK.'],['GAPPS','Sim, com Google Play','Inclui os serviços do Google.'],['skip','Agora não','Você pode ativar depois na Capix Central.']]
+      .map(([v,t,s]) => `<label class="choice ${W.android===v?'on':''}" data-wand="${v}"><input type="radio" name="wa" ${W.android===v?'checked':''}><div><b>${t}</b><span>${s}</span></div></label>`).join('')}`,
+  () => `<h1>Seus apps</h1><p class="muted" style="margin-bottom:14px">Marque o que quer instalar agora. Dá para mudar depois.</p>
+    <div style="max-height:300px;overflow:auto">${S.apps.filter(a => a.cat !== 'Jogos').map(a => `<label class="choice ${W.apps.has(a.id)?'on':''}" data-wapp="${esc(a.id)}"><input type="checkbox" ${W.apps.has(a.id)?'checked':''}><div><b>${esc(a.name)}${a.installed?' <span class="pill ok">já instalado</span>':''}</b><span>${esc(a.desc)}</span></div></label>`).join('')}</div>`,
+  () => `<h1>Você joga?</h1><p class="muted" style="margin-bottom:14px">Escolha as plataformas de jogos que quer instalar. Depois, é só ligar o <b>Modo gamer</b> na Capix Central.</p>
+    <div style="max-height:300px;overflow:auto">${S.apps.filter(a => a.cat === 'Jogos').map(a => `<label class="choice ${W.apps.has(a.id)?'on':''}" data-wapp="${esc(a.id)}"><input type="checkbox" ${W.apps.has(a.id)?'checked':''}><div><b>${esc(a.name)}${a.installed?' <span class="pill ok">já instalado</span>':''}</b><span>${esc(a.desc)}</span></div></label>`).join('')}</div>`,
+  () => `<h1>Atualizações</h1><p class="muted" style="margin-bottom:14px">O Capix pode se manter atualizado sozinho. A nova versão é baixada em segundo plano e entra em vigor quando você reiniciar. Se algo der errado, dá para voltar à versão anterior.</p>
+    ${card('upd','Atualizações automáticas', 'Recomendado', tog('wauto', W.auto))}`,
+  () => `<div style="text-align:center;padding-top:30px"><h1>Tudo pronto! 🌿</h1><p class="muted">Vamos aplicar suas escolhas. Isso pode levar alguns minutos, e você já pode ir usando o computador.</p>
+    <ul style="text-align:left;max-width:420px;margin:18px auto 0;color:var(--mut)">
+      <li>Apps Android: <b style="color:var(--txt)">${{VANILLA:'sem Google',GAPPS:'com Google Play',skip:'não agora'}[W.android]}</b></li>
+      <li>Apps para instalar: <b style="color:var(--txt)">${[...W.apps].filter(id => !S.apps.find(a=>a.id===id)?.installed).length}</b></li>
+      <li>Atualizações automáticas: <b style="color:var(--txt)">${W.auto?'ligadas':'desligadas'}</b></li></ul></div>`,
+];
+function openWizard() {
+  W.step = 0; W.apps = new Set(S.apps.filter(a => a.default || a.installed).map(a => a.id)); W.auto = S.updates.auto;
+  $('#wiz').classList.add('open'); renderWiz();
+}
+function renderWiz() {
+  $('#wsteps').innerHTML = WSTEPS.map((_, i) => `<i class="${i<=W.step?'on':''}"></i>`).join('');
+  $('#wbody').innerHTML = WSTEPS[W.step]();
+  $('#wback').style.visibility = W.step ? 'visible' : 'hidden';
+  $('#wnext').textContent = W.step === WSTEPS.length - 1 ? 'Concluir' : W.step === 0 ? 'Começar' : 'Avançar';
+}
+$('#wbody').addEventListener('click', e => {
+  const an = e.target.closest('[data-wand]'); if (an) { W.android = an.dataset.wand; return renderWiz(); }
+  const ap = e.target.closest('[data-wapp]'); if (ap) { e.preventDefault(); const id = ap.dataset.wapp; W.apps.has(id) ? W.apps.delete(id) : W.apps.add(id); return renderWiz(); }
+  const tg = e.target.closest('[data-tog="wauto"]'); if (tg) { e.preventDefault(); W.auto = !W.auto; return renderWiz(); }
+});
+$('#wback').onclick = () => { W.step--; renderWiz(); };
+$('#wnext').onclick = async () => {
+  if (W.step < WSTEPS.length - 1) { W.step++; return renderWiz(); }
+  $('#wiz').classList.remove('open');
+  await run('welcome-done', [], '', true);
+  if (W.auto !== S.updates.auto) await run('auto-updates', [W.auto ? 'on' : 'off'], 'Configurando atualizações');
+  for (const id of W.apps) if (!S.apps.find(a => a.id === id)?.installed) await run('flatpak-install', [id], `Instalando ${S.apps.find(a=>a.id===id)?.name || id}…`);
+  if (W.android !== 'skip') await run('android-init', [W.android], 'Ativando os apps Android…');
+};
+
+addEventListener('hashchange', () => {
+  const h = location.hash.slice(1);
+  if (h === 'welcome') return openWizard();
+  if (PAGES.some(p => p[0] === h) && h !== page) { page = h; render(); }
+});
+(async () => {
+  if (DRY) $('#demo').classList.remove('hidden');
+  document.querySelectorAll('.logo-img').forEach(i => i.src = asset('logo.png'));
+  const h = window.CAPIX_START || location.hash.slice(1);
+  if (PAGES.some(p => p[0] === h)) page = h;
+  await load();
+  if (h === 'welcome') openWizard();
+})();
+</script>
+</body>
+</html>

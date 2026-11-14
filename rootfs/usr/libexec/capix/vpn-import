@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Escolhe um arquivo de configuração WireGuard (.conf) e pede ao sistema para importá-lo.
+set -euo pipefail
+f="$(kdialog --title 'Importar VPN WireGuard' --getopenfilename "$HOME" '*.conf')" || exit 0
+[ -z "$f" ] && exit 0
+pkexec /usr/libexec/capix/capix-admin vpn-import "$f"
+kdialog --msgbox "VPN importada. Ligue-a na Capix Central → Privacidade."

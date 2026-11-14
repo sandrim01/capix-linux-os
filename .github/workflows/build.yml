@@ -1,0 +1,113 @@
+# Capix Linux OS (by UnbugSTI) — build automático
+#   image  : compila a imagem do sistema e publica em ghcr.io/<dono>/capix:<versão do Fedora>
+#   iso    : gera a ISO instalável a partir dessa imagem (baixe em Actions → execução → Artifacts)
+#   nvidia : variante com driver NVIDIA (não bloqueia as outras se falhar)
+# As máquinas instaladas recebem as atualizações sozinhas (capix-update.timer -> bootc upgrade).
+name: build-capix
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 6 * * *"        # todo dia: pega as atualizações de segurança do Fedora
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  FEDORA_VERSION: "44"
+
+jobs:
+  image:
+    runs-on: ubuntu-24.04
+    outputs:
+      img: ${{ steps.build.outputs.img }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Liberar espaço no runner
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Ferramentas de arte
+        run: sudo apt-get update && sudo apt-get install -y librsvg2-bin imagemagick fonts-inter
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Gerar arte (splash, login, wallpapers, ícones)
+        run: node tools/render-assets.mjs && node tools/build-preview.mjs
+
+      - name: Prévia (artefato)
+        uses: actions/upload-artifact@v4
+        with:
+          name: capix-preview
+          path: preview/capix-preview.html
+
+      - name: Construir a imagem base (AMD/Intel)
+        id: build
+        run: |
+          IMG=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/capix
+          podman build --build-arg FEDORA_VERSION=$FEDORA_VERSION \
+            -t $IMG:$FEDORA_VERSION -t $IMG:$FEDORA_VERSION-$(date +%Y%m%d) .
+          echo "img=$IMG" >> $GITHUB_OUTPUT
+
+      - name: Publicar no GitHub Container Registry
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+          podman push ${{ steps.build.outputs.img }}:$FEDORA_VERSION
+          podman push ${{ steps.build.outputs.img }}:$FEDORA_VERSION-$(date +%Y%m%d)
+
+  iso:
+    needs: image
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Liberar espaço no runner
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Baixar a imagem publicada
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | sudo podman login ghcr.io -u ${{ github.actor }} --password-stdin
+          sudo podman pull ${{ needs.image.outputs.img }}:$FEDORA_VERSION
+
+      - name: Gerar a ISO instalável
+        run: |
+          mkdir -p output
+          sudo podman run --rm --privileged --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v "$PWD/output:/output" \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            quay.io/centos-bootc/bootc-image-builder:latest \
+            --type anaconda-iso --rootfs btrfs ${{ needs.image.outputs.img }}:$FEDORA_VERSION
+          sudo chown -R "$USER" output && find output -name '*.iso' -exec ls -lh {} +
+
+      - name: ISO (artefato para download)
+        uses: actions/upload-artifact@v4
+        with:
+          name: capix-iso
+          path: output/**/*.iso
+          compression-level: 0
+          retention-days: 7
+
+  nvidia:
+    needs: image
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Liberar espaço no runner
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+      - name: Construir e publicar a variante NVIDIA
+        run: |
+          IMG=${{ needs.image.outputs.img }}
+          echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+          podman build -f Containerfile.nvidia --build-arg FEDORA_VERSION=$FEDORA_VERSION \
+            --build-arg BASE=$IMG:$FEDORA_VERSION \
+            -t $IMG-nvidia:$FEDORA_VERSION -t $IMG-nvidia:$FEDORA_VERSION-$(date +%Y%m%d) .
+          podman push $IMG-nvidia:$FEDORA_VERSION
+          podman push $IMG-nvidia:$FEDORA_VERSION-$(date +%Y%m%d)

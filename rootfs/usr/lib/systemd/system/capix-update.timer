@@ -1,0 +1,11 @@
+[Unit]
+Description=Capix: verificar atualizações periodicamente
+
+[Timer]
+OnBootSec=15min
+OnUnitInactiveSec=6h
+RandomizedDelaySec=30min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

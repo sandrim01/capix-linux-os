@@ -1,0 +1,10 @@
+[Unit]
+Description=Capix: verificação de antivírus (ClamAV)
+
+[Service]
+# Não roda enquanto alguém estiver no modo gamer (Capix Central)
+ExecCondition=/bin/sh -c 'for f in /var/home/*/.config/capix/gamer-on /home/*/.config/capix/gamer-on; do [ -e "$$f" ] && exit 1; done; exit 0'
+Type=oneshot
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/usr/libexec/capix/av-scan

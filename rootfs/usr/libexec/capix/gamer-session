@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Sessão "modo console": gamescope + Steam Big Picture. Ao sair da Steam, volta para a tela de login.
+mkdir -p "$HOME/.config/capix" && touch "$HOME/.config/capix/gamer-on"
+trap 'rm -f "$HOME/.config/capix/gamer-on"' EXIT
+powerprofilesctl set performance 2>/dev/null || true
+if ! flatpak info com.valvesoftware.Steam >/dev/null 2>&1; then
+  exec gamescope -f -- kdialog --title "Capix Gamer" --error "A Steam ainda não está instalada.\nInstale pela Capix Central → Modo gamer e entre de novo."
+fi
+gamescope -e -f --adaptive-sync --mangoapp -- flatpak run com.valvesoftware.Steam -gamepadui
+powerprofilesctl set balanced 2>/dev/null || true

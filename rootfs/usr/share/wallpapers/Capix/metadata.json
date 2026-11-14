@@ -1,0 +1,8 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "UnbugSTI (UnbugSolutions-TI)" }],
+        "Id": "Capix",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Capix"
+    }
+}

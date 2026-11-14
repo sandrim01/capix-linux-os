@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=Capix
+Description=Capix Linux OS — capivara mastigando um matinho
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/capix
+ScriptFile=/usr/share/plymouth/themes/capix/capix.script

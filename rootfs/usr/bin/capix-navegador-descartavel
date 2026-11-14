@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Capix — navegador descartável: perfil temporário em memória (tmpfs), sem histórico,
+# cookies ou extensões. Tudo é apagado ao fechar. Bom para abrir links suspeitos.
+dir="$(mktemp -d "${XDG_RUNTIME_DIR:-/tmp}/capix-descartavel.XXXXXX")"
+trap 'rm -rf "$dir"' EXIT
+chromium-browser --user-data-dir="$dir" --incognito --no-first-run --no-default-browser-check \
+  --disable-sync --disable-extensions --class=CapixDescartavel "$@"

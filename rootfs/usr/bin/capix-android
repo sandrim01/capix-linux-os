@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Capix Linux OS — abre os apps Android (Waydroid).
+# Na primeira vez, oferece baixar e configurar a imagem do Android.
+set -euo pipefail
+
+if [ ! -f /var/lib/waydroid/waydroid.cfg ]; then
+  if command -v kdialog >/dev/null; then
+    kdialog --title "Apps Android" --yesno \
+"Os apps Android ainda não estão configurados.\n\nO Capix vai baixar a imagem do Android (~1 GB).\nIncluir Google Play Services (GAPPS)?" \
+      --yes-label "Com Google Play" --no-label "Sem Google (LineageOS puro)" && TYPE=GAPPS || TYPE=VANILLA
+  else
+    TYPE=VANILLA
+  fi
+  pkexec /usr/libexec/capix/capix-admin android-init "$TYPE"
+fi
+
+waydroid session start >/dev/null 2>&1 &
+sleep 2
+exec waydroid show-full-ui

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Sessão do modo quiosque: compositor cage + Chromium em tela cheia, reabrindo se fechar.
+URL="about:blank"
+[ -r /etc/capix/kiosk.conf ] && . /etc/capix/kiosk.conf
+export XDG_SESSION_TYPE=wayland
+exec cage -s -- /bin/sh -c '
+  while true; do
+    chromium-browser --kiosk --no-first-run --noerrdialogs --disable-translate --incognito \
+      --ozone-platform=wayland --disable-pinch --overscroll-history-navigation=0 "$0"
+    sleep 1
+  done' "$URL"

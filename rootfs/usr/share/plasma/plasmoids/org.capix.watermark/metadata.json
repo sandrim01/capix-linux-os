@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "UnbugSTI (UnbugSolutions-TI)" }],
+        "Category": "Miscellaneous",
+        "Description": "Marca d'água do Capix Linux OS na área de trabalho",
+        "Icon": "capix-start",
+        "Id": "org.capix.watermark",
+        "License": "GPL-3.0-or-later",
+        "Name": "Marca d'água Capix",
+        "Version": "1.0",
+        "FormFactors": ["desktop"]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

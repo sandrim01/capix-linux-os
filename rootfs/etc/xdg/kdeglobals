@@ -1,0 +1,6 @@
+[KDE]
+LookAndFeelPackage=org.capix.desktop
+
+[General]
+AccentColor=246,139,44
+ColorScheme=BreezeDark

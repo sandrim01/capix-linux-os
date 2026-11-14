@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Instala os apps marcados com "1" em /usr/share/capix/apps.list
+set -euo pipefail
+ids=$(grep -v '^\s*#' /usr/share/capix/apps.list | awk -F'|' 'NF>=5 && $5 ~ /1/ {gsub(/ /,"",$1); print $1}')
+[ -n "$ids" ] && flatpak install --system --noninteractive --assumeyes flathub $ids
+mkdir -p /var/lib/capix && touch /var/lib/capix/first-apps-ok

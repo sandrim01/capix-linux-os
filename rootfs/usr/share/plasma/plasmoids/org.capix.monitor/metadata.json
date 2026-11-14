@@ -1,0 +1,15 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [{ "Name": "UnbugSTI (UnbugSolutions-TI)" }],
+        "Category": "System Information",
+        "Description": "Todas as métricas do computador: processador, memória, placa de vídeo, discos, rede, bateria e processos",
+        "Icon": "utilities-system-monitor",
+        "Id": "org.capix.monitor",
+        "License": "GPL-3.0-or-later",
+        "Name": "Capix Monitor",
+        "Version": "1.0",
+        "FormFactors": ["desktop", "planar"]
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

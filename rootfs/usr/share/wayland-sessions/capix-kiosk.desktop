@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Capix Quiosque
+Comment=Mostra uma única página da web em tela cheia
+Exec=/usr/libexec/capix/kiosk-session
+NoDisplay=true

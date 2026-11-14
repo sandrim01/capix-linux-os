@@ -1,0 +1,9 @@
+[Unit]
+Description=Capix: cópia de segurança da pasta pessoal
+ConditionPathExists=%h/.config/capix/backup.json
+
+[Service]
+Type=oneshot
+Nice=15
+IOSchedulingClass=idle
+ExecStart=/usr/libexec/capix/capix-backup run

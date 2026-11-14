@@ -1,0 +1,145 @@
+#!/usr/bin/env python3
+"""
+Capix Backup — cópias de segurança da pasta pessoal (nível de usuário, sem root).
+Snapshots incrementais com rsync --link-dest (arquivos iguais viram hardlink: ocupa pouco espaço).
+Destino escolhido pelo usuário (de preferência um disco externo).
+
+  capix-backup run         faz uma cópia agora
+  capix-backup status      imprime JSON com o estado (para a Capix Central)
+  capix-backup prune       mantém só as últimas N cópias
+
+Config: ~/.config/capix/backup.json  { "dest": "/run/media/USER/HD/CapixBackup", "keep": 10,
+                                        "exclude": ["Downloads", ".cache", ".local/share/Trash"] }
+"""
+import json, os, shutil, subprocess, sys, time
+
+HOME = os.path.expanduser("~")
+CFG = os.path.join(HOME, ".config/capix/backup.json")
+STATUS = os.path.join(HOME, ".local/share/capix/backup-status.json")
+DRY = os.environ.get("CAPIX_DRYRUN") == "1"
+DEFAULT_EXCLUDE = ["Downloads", ".cache", ".local/share/Trash", ".local/share/flatpak", ".var/app/*/cache",
+                   ".local/share/waydroid", ".mozilla/firefox/*/cache2", "*/node_modules"]
+
+
+def cfg():
+    try:
+        return json.load(open(CFG))
+    except Exception:
+        return {}
+
+
+def save_status(d):
+    os.makedirs(os.path.dirname(STATUS), exist_ok=True)
+    json.dump(d, open(STATUS, "w"))
+
+
+def snapshots(dest):
+    try:
+        return sorted(d for d in os.listdir(dest) if d.startswith("snap-") and os.path.isdir(os.path.join(dest, d)))
+    except Exception:
+        return []
+
+
+def status():
+    c = cfg()
+    dest = c.get("dest", "")
+    st = {"dest": dest, "configurado": bool(dest), "disponivel": bool(dest) and os.path.isdir(dest),
+          "keep": c.get("keep", 10), "auto": is_auto(), "snapshots": []}
+    try:
+        st.update(json.load(open(STATUS)))
+    except Exception:
+        pass
+    if dest and os.path.isdir(dest):
+        snaps = snapshots(dest)
+        st["snapshots"] = [{"nome": s, "quando": s[5:].replace("_", " ").replace("-", ":", 2)[:16],
+                            "data": os.path.getmtime(os.path.join(dest, s))} for s in snaps[-20:]][::-1]
+        try:
+            du = shutil.disk_usage(dest)
+            st["disco"] = {"total": du.total, "livre": du.free}
+        except Exception:
+            pass
+    return st
+
+
+def is_auto():
+    try:
+        r = subprocess.run(["systemctl", "--user", "is-enabled", "capix-backup.timer"], capture_output=True, text=True, timeout=5)
+        return r.stdout.strip() == "enabled"
+    except Exception:
+        return False
+
+
+def run_backup():
+    c = cfg()
+    dest = c.get("dest", "")
+    if not dest:
+        fail("destino não configurado")
+    if not os.path.isdir(dest):
+        fail("o destino não está disponível (conecte o disco externo e tente de novo)")
+    if not DRY and not shutil.which("rsync"):
+        fail("o rsync não está instalado nesta imagem")
+    os.makedirs(dest, exist_ok=True)
+    stamp = time.strftime("snap-%Y-%m-%d_%H-%M-%S")
+    target = os.path.join(dest, stamp)
+    snaps = snapshots(dest)
+    link = os.path.join(dest, snaps[-1]) if snaps else None
+    excl = c.get("exclude", DEFAULT_EXCLUDE)
+    cmd = ["rsync", "-aH", "--delete", "--partial", "--info=progress2", "--mkpath"]
+    for e in excl:
+        cmd += ["--exclude", e]
+    if link:
+        cmd += ["--link-dest", link]
+    cmd += [HOME + "/", target + "/"]
+    save_status({"rodando": True, "inicio": time.time(), "ultimo": status().get("ultimo")})
+    if DRY:
+        print("$ " + " ".join(cmd))
+        time.sleep(1)
+        ok, total = True, 1234567890
+    else:
+        p = subprocess.run(cmd)
+        ok = p.returncode in (0, 24)   # 24 = arquivo sumiu durante a cópia (normal)
+        total = dir_size(target) if ok else 0
+    prune()
+    save_status({"rodando": False, "ultimo": time.strftime("%Y-%m-%d %H:%M"), "ok": ok, "tamanho": total})
+    print("ok" if ok else "erro")
+    sys.exit(0 if ok else 1)
+
+
+def dir_size(p):
+    t = 0
+    for root, _, files in os.walk(p):
+        for f in files:
+            try:
+                t += os.lstat(os.path.join(root, f)).st_size
+            except OSError:
+                pass
+    return t
+
+
+def prune():
+    c = cfg()
+    dest, keep = c.get("dest", ""), int(c.get("keep", 10))
+    snaps = snapshots(dest)
+    for old in snaps[:-keep] if keep > 0 else []:
+        p = os.path.join(dest, old)
+        if not DRY:
+            shutil.rmtree(p, ignore_errors=True)
+        else:
+            print("removeria", p)
+
+
+def fail(msg):
+    print("erro: " + msg, file=sys.stderr)
+    sys.exit(2)
+
+
+if __name__ == "__main__":
+    cmd = sys.argv[1] if len(sys.argv) > 1 else "status"
+    if cmd == "status":
+        print(json.dumps(status(), ensure_ascii=False))
+    elif cmd == "run":
+        run_backup()
+    elif cmd == "prune":
+        prune()
+    else:
+        fail("comando desconhecido")

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Apps Android
+Name[pt_BR]=Apps Android
+Comment=Rode apps Android lado a lado com os apps Linux e web
+Exec=capix-android
+Icon=waydroid
+Categories=System;Emulator;
+Keywords=android;apk;waydroid;play;

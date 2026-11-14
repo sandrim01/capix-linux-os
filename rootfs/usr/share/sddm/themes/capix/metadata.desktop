@@ -1,0 +1,16 @@
+[SddmGreeterTheme]
+Name=Capix
+Description=Tela de login do Capix Linux OS: bloqueio estilo Windows 10 e capivara interativa
+Author=UnbugSTI (UnbugSolutions-TI)
+Copyright=GPL-3.0-or-later
+License=GPL-3.0-or-later
+Type=sddm-theme
+Version=1.0
+Website=https://github.com/
+Screenshot=assets/background.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=translations
+Theme-Id=capix
+Theme-API=2.0
+QtVersion=6

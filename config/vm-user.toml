@@ -1,0 +1,5 @@
+# Usuário de teste para a imagem de VM (./build.sh vm). NÃO use em produção.
+[[customizations.user]]
+name = "capix"
+password = "capix"
+groups = ["wheel"]

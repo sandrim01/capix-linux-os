@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Navegador descartável
+Comment=Janela que não guarda nada e some ao fechar
+Exec=capix-navegador-descartavel %U
+Icon=chromium-browser
+Categories=Network;WebBrowser;Security;
+Keywords=privado;anônimo;descartável;link suspeito;
+StartupWMClass=CapixDescartavel
