@@ -30,12 +30,12 @@ RUN dnf -y install \
     && dnf clean all
 
 # 1b) Placas de vídeo AMD e Intel: drivers open source (Mesa), Vulkan 64 e 32 bits
-#     (jogos e Proton), decodificação de vídeo (VA-API/VDPAU) e utilitários.
+#     (jogos e Proton), decodificação de vídeo (VA-API) e utilitários.
 RUN dnf -y install \
-        mesa-dri-drivers mesa-vulkan-drivers mesa-va-drivers mesa-vdpau-drivers \
+        mesa-dri-drivers mesa-vulkan-drivers mesa-va-drivers \
         mesa-dri-drivers.i686 mesa-vulkan-drivers.i686 \
         vulkan-loader vulkan-loader.i686 vulkan-tools \
-        libva-utils vdpauinfo \
+        libva-utils \
         radeontop intel-gpu-tools \
         glxinfo clinfo \
     && dnf clean all
