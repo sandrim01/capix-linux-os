@@ -21,9 +21,9 @@ RUN dnf -y install \
         clamav clamav-update \
         libnotify \
         gamemode gamescope mangohud \
-        power-profiles-daemon python3-dbus \
+        python3-dbus \
         bind-utils perl-Image-ExifTool \
-        rsync usbguard NetworkManager-wireguard \
+        rsync usbguard \
         cups cups-filters ipp-usb plasma-print-manager \
         sane-backends sane-airscan skanpage avahi nss-mdns \
     && (dnf -y remove firefox firefox-langpacks || true) \

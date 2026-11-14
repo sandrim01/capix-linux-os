@@ -167,7 +167,7 @@ def status():
     st["wallpapers"] = {"list": wallpapers(), "current": current_wallpaper()}
     st["gamer"] = {
         "on": os.path.exists(GAMER_FLAG),
-        "profile": sh("powerprofilesctl", "get"),
+        "profile": sh("/usr/libexec/capix/powerprofile", "get"),
         "gamemode": shutil.which("gamemoded") is not None,
         "mangohud": shutil.which("mangohud") is not None,
         "console_session": os.path.exists("/usr/share/wayland-sessions/capix-gamer.desktop"),
@@ -335,7 +335,7 @@ def user_action(name, args):
                 open(GAMER_FLAG, "w").close()
             elif os.path.exists(GAMER_FLAG):
                 os.remove(GAMER_FLAG)
-        cmds = [["powerprofilesctl", "set", "performance" if on else "balanced"]]
+        cmds = [["/usr/libexec/capix/powerprofile", "performance" if on else "balanced"]]
         cmds.append(["/usr/libexec/capix/gamer-dnd", "on" if on else "off"])   # "Não perturbe"
         return cmds, False
     if name == "open-app":

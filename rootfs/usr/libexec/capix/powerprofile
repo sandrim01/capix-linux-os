@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Capix — lê/define o perfil de energia pela API net.hadess.PowerProfiles.
+# Funciona tanto com power-profiles-daemon quanto com tuned-ppd (ambos expõem essa API),
+# por isso não depende do binário powerprofilesctl.
+#   powerprofile get                      -> imprime o perfil atual
+#   powerprofile performance|balanced|power-saver -> define o perfil
+DEST=net.hadess.PowerProfiles; OBJ=/net/hadess/PowerProfiles
+case "${1:-get}" in
+  get)
+    command -v powerprofilesctl >/dev/null && { powerprofilesctl get 2>/dev/null; exit 0; }
+    gdbus call --system --dest "$DEST" --object-path "$OBJ" \
+      --method org.freedesktop.DBus.Properties.Get "$DEST" ActiveProfile 2>/dev/null \
+      | sed -n "s/.*'\\(.*\\)'.*/\\1/p"
+    ;;
+  performance|balanced|power-saver)
+    command -v powerprofilesctl >/dev/null && exec powerprofilesctl set "$1"
+    gdbus call --system --dest "$DEST" --object-path "$OBJ" \
+      --method org.freedesktop.DBus.Properties.Set "$DEST" ActiveProfile "<'$1'>" >/dev/null 2>&1
+    ;;
+  *) echo "uso: powerprofile get|performance|balanced|power-saver" >&2; exit 2 ;;
+esac
