@@ -26,6 +26,8 @@ RUN dnf -y install \
 
 # Driver NVIDIA + aceleração de vídeo e suporte 32 bits (jogos/Proton).
 # akmods compila o módulo para o kernel desta imagem, já na hora do build.
+# No Fedora 44 o akmods recusa rodar como root ("Not to be used as root"), então
+# compilamos o pacote kmod como o usuário akmods (akmodsbuild) e instalamos o RPM gerado.
 RUN set -eux; \
     KVER="$(ls /usr/lib/modules | sort -V | tail -n1)"; \
     dnf -y install \
@@ -33,10 +35,16 @@ RUN set -eux; \
         xorg-x11-drv-nvidia-cuda-libs xorg-x11-drv-nvidia-libs.i686 \
         libva-nvidia-driver \
         nvidia-settings \
-        kernel-devel-"${KVER}" kernel-headers; \
-    akmods --force --kernels "${KVER}"; \
+        kernel-devel-"${KVER}" kernel-headers \
+        gcc make kmodtool; \
+    SRPM="$(ls /usr/src/akmods/nvidia-kmod-*.src.rpm | head -n1)"; \
+    install -d -o akmods -g akmods /tmp/akbuild; \
+    runuser -u akmods -- akmodsbuild --kernels "${KVER}" --outputdir /tmp/akbuild "${SRPM}"; \
+    RPM="$(ls /tmp/akbuild/kmod-nvidia-*.rpm | grep -v debug | head -n1)"; \
+    dnf -y install "${RPM}"; \
     # confirma que o módulo foi mesmo compilado (senão, falha o build em vez de gerar imagem quebrada)
     modinfo -k "${KVER}" nvidia >/dev/null; \
+    rm -rf /tmp/akbuild; \
     dnf clean all
 
 # Carrega o driver no boot, impede o nouveau e habilita o KMS (necessário no Wayland/Plasma)
