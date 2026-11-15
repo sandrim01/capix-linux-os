@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Capix Linux OS — por UnbugSTI</title>
-<meta name="description" content="Capix Linux OS: um Linux para o dia a dia com a cara do Windows 10 e a alma do FydeOS — apps web, Android e Linux, sistema imutável e atualizações automáticas. Mascote capivara. Por UnbugSTI.">
+<meta name="description" content="Capix Linux OS: para quem ama o Windows e não abre mão da segurança e otimização do Linux. Interface familiar, sistema blindado, atualizações automáticas e apps web, Android e Linux. Por UnbugSTI.">
 <meta property="og:title" content="Capix Linux OS">
-<meta property="og:description" content="Apps web, Android e Linux lado a lado. Sistema imutável, atualizações automáticas e rollback. A cara do Windows 10, a alma do FydeOS.">
-<meta property="og:image" content="assets/logo.png">
+<meta property="og:description" content="O conforto do Windows, a segurança e a leveza do Linux. Interface familiar, sistema blindado e tudo embarcado.">
+<meta property="og:image" content="assets/shot-desktop.png">
 <meta property="og:type" content="website">
 <link rel="icon" type="image/png" href="assets/logo.png">
 <style>
@@ -15,7 +15,7 @@
     --bg:#0f0f11; --bg2:#151517; --card:#1b1b1d; --card2:#202023;
     --line:#2a2a2e; --line2:#333338;
     --tx:#f2f2f2; --tx2:#d0d0d4; --tx3:#a9a9b0;
-    --orange:#F68B2C; --orange-soft:#ffb23d; --coral:#ff6b5b; --green:#6BB33F;
+    --orange:#F68B2C; --orange-soft:#ffb23d; --coral:#ff6b5b; --green:#6BB33F; --blue:#5b9ee0;
     --radius:16px; --maxw:1120px;
     --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   }
@@ -44,22 +44,27 @@
   @media(max-width:760px){.nav-links a:not(.btn){display:none}}
 
   /* HERO */
-  .hero{position:relative;padding:96px 0 80px;text-align:center;overflow:hidden}
-  .hero-bg{position:absolute;inset:0;background:url('assets/hero-bg.png') center/cover no-repeat;opacity:.16;filter:saturate(1.1)}
-  .hero-bg::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 30%,transparent,var(--bg) 78%)}
+  .hero{position:relative;padding:92px 0 72px;text-align:center;overflow:hidden}
+  .hero-bg{position:absolute;inset:0;background:url('assets/hero-bg.png') center/cover no-repeat;opacity:.16}
+  .hero-bg::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 25%,transparent,var(--bg) 78%)}
   .hero-in{position:relative;z-index:2}
-  .hero-logo{width:132px;height:132px;border-radius:30px;margin:0 auto 26px;box-shadow:0 18px 60px -12px rgba(246,139,44,.45);border:1px solid var(--line2)}
+  .hero-logo{width:120px;height:120px;border-radius:28px;margin:0 auto 24px;box-shadow:0 18px 60px -12px rgba(246,139,44,.45);border:1px solid var(--line2)}
   .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--orange);background:rgba(246,139,44,.1);border:1px solid rgba(246,139,44,.28);padding:6px 14px;border-radius:999px;margin-bottom:22px}
-  .hero h1{font-size:clamp(38px,6.5vw,68px);font-weight:800;letter-spacing:-.02em;line-height:1.05}
+  .hero h1{font-size:clamp(36px,6vw,64px);font-weight:800;letter-spacing:-.02em;line-height:1.06}
   .hero h1 span{background:linear-gradient(120deg,var(--orange),var(--orange-soft));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p.lead{max-width:640px;margin:22px auto 0;font-size:clamp(16px,2.4vw,20px);color:var(--tx2)}
-  .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+  .hero p.lead{max-width:660px;margin:22px auto 0;font-size:clamp(16px,2.4vw,20px);color:var(--tx2)}
+  .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
   .hero-cta .btn{padding:14px 26px;font-size:15px}
   .hero-note{margin-top:18px;font-size:13px;color:var(--tx3)}
 
+  /* HERO SHOT */
+  .hero-shot{position:relative;z-index:2;max-width:960px;margin:52px auto 0;padding:0 24px}
+  .hero-shot img{width:100%;border-radius:14px;border:1px solid var(--line2);box-shadow:0 40px 90px -30px rgba(0,0,0,.8)}
+  .hero-shot .cap{margin-top:12px;font-size:13px;color:var(--tx3)}
+
   /* SECTIONS */
-  section{padding:76px 0}
-  .sec-head{text-align:center;max-width:640px;margin:0 auto 48px}
+  section{padding:74px 0}
+  .sec-head{text-align:center;max-width:640px;margin:0 auto 46px}
   .sec-head .kicker{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange)}
   .sec-head h2{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.02em;margin-top:10px}
   .sec-head p{color:var(--tx3);margin-top:12px;font-size:16px}
@@ -72,6 +77,16 @@
   .pillar p{color:var(--tx3);font-size:14.5px;margin-top:8px}
   @media(max-width:860px){.pillars{grid-template-columns:1fr}}
 
+  /* SHOWCASE */
+  .showcase{display:flex;flex-direction:column;gap:64px}
+  .show-row{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+  .show-row.rev .show-text{order:2}
+  .show-img img{width:100%;border-radius:12px;border:1px solid var(--line2);box-shadow:0 30px 70px -28px rgba(0,0,0,.75)}
+  .show-text .tag{display:inline-block;font-size:12px;font-weight:700;color:var(--orange);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+  .show-text h3{font-size:24px;font-weight:800;letter-spacing:-.01em}
+  .show-text p{color:var(--tx2);margin-top:12px;font-size:15.5px}
+  @media(max-width:820px){.show-row,.show-row.rev .show-text{grid-template-columns:1fr;order:0}.show-row.rev .show-img{order:-1}}
+
   /* FEATURES GRID */
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
   .feat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;transition:border-color .15s,transform .15s}
@@ -82,14 +97,28 @@
   .feat p{color:var(--tx3);font-size:14px;margin-top:7px}
   @media(max-width:860px){.grid{grid-template-columns:1fr}}
 
-  /* FYDE TABLE */
-  .fyde{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .fyde table{width:100%;border-collapse:collapse;font-size:14.5px}
-  .fyde th{text-align:left;padding:15px 22px;background:var(--card2);color:var(--tx3);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.04em}
-  .fyde td{padding:14px 22px;border-top:1px solid var(--line);color:var(--tx2);vertical-align:top}
-  .fyde td:first-child{color:var(--tx3);width:38%}
-  .fyde td b{color:var(--tx)}
-  @media(max-width:620px){.fyde th,.fyde td{padding:11px 14px;font-size:13px}}
+  /* TWO WORLDS */
+  .worlds{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .world{border-radius:var(--radius);padding:30px;border:1px solid var(--line)}
+  .world.win{background:linear-gradient(180deg,rgba(91,158,224,.08),var(--card));border-color:rgba(91,158,224,.3)}
+  .world.lin{background:linear-gradient(180deg,rgba(107,179,63,.08),var(--card));border-color:rgba(107,179,63,.3)}
+  .world h3{font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .world .sub{color:var(--tx3);font-size:14px;margin-bottom:18px}
+  .world ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .world li{font-size:14.5px;color:var(--tx2);display:flex;gap:10px;align-items:flex-start}
+  .world li::before{content:"";width:7px;height:7px;border-radius:50%;margin-top:8px;flex:none}
+  .world.win li::before{background:var(--blue)}
+  .world.lin li::before{background:var(--green)}
+  @media(max-width:760px){.worlds{grid-template-columns:1fr}}
+
+  /* STEPS */
+  .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;counter-reset:s}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px;position:relative}
+  .step::before{counter-increment:s;content:counter(s);display:grid;place-items:center;width:34px;height:34px;border-radius:9px;background:rgba(246,139,44,.14);color:var(--orange);font-weight:800;font-size:16px;margin-bottom:14px}
+  .step h3{font-size:15.5px;font-weight:700}
+  .step p{color:var(--tx3);font-size:13.5px;margin-top:6px}
+  @media(max-width:860px){.steps{grid-template-columns:1fr 1fr}}
+  @media(max-width:480px){.steps{grid-template-columns:1fr}}
 
   /* DOWNLOADS */
   #download{background:linear-gradient(180deg,var(--bg),#121214)}
@@ -97,7 +126,7 @@
   @media(max-width:760px){.dl-grid{grid-template-columns:1fr}}
   .dl-card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line2);border-radius:var(--radius);padding:28px;display:flex;flex-direction:column}
   .dl-card.feature{border-color:rgba(246,139,44,.4);box-shadow:0 0 0 1px rgba(246,139,44,.08),0 20px 50px -20px rgba(246,139,44,.25)}
-  .dl-card h3{font-size:19px;font-weight:800;display:flex;align-items:center;gap:10px}
+  .dl-card h3{font-size:19px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .dl-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:rgba(246,139,44,.15);color:var(--orange)}
   .dl-card .sub{color:var(--tx3);font-size:14px;margin:8px 0 18px}
   .dl-card ul{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -134,9 +163,9 @@
   <div class="wrap nav-in">
     <a class="brand" href="#top"><img src="assets/logo.png" alt="Capix">Capix<span class="accent">OS</span></a>
     <nav class="nav-links">
+      <a href="#pordentro">Por dentro</a>
       <a href="#destaques">Destaques</a>
-      <a href="#fyde">Como funciona</a>
-      <a href="#preview">Prévia</a>
+      <a href="#passos">Como instalar</a>
       <a href="https://github.com/sandrim01/capix-linux-os" target="_blank" rel="noopener">GitHub</a>
       <a href="#download" class="btn btn-primary">Baixar</a>
     </nav>
@@ -151,34 +180,112 @@
     <div class="wrap hero-in">
       <img src="assets/logo.png" alt="Mascote Capix" class="hero-logo">
       <div class="eyebrow">🌿 por UnbugSTI · UnbugSolutions-TI</div>
-      <h1>O Linux do dia a dia,<br>com a alma do <span>FydeOS</span></h1>
-      <p class="lead">Apps <b>web</b>, <b>Android</b> e <b>Linux</b> lado a lado. Sistema protegido contra alterações, com atualizações automáticas e volta à versão anterior num comando. A cara do Windows 10 — e uma capivara te esperando no login.</p>
+      <h1>O Windows que você ama,<br>com a <span>força do Linux</span></h1>
+      <p class="lead">O Capix é para quem curte o jeito do Windows mas não abre mão da <b>segurança</b>, da <b>leveza</b> e do <b>controle</b> do Linux. Interface familiar, sistema blindado contra alterações, atualizações automáticas e tudo embarcado — apps web, Android e Linux.</p>
       <div class="hero-cta">
         <a href="#download" class="btn btn-primary">⬇ Baixar o Capix</a>
-        <a href="#preview" class="btn btn-ghost">▶ Ver a prévia</a>
+        <a href="#pordentro" class="btn btn-ghost">Ver por dentro</a>
       </div>
-      <div class="hero-note">Gratuito e de código aberto · Fedora bootc (KDE Plasma 6) · AMD, Intel e NVIDIA</div>
+      <div class="hero-note">Gratuito e de código aberto · KDE Plasma 6 · AMD, Intel e NVIDIA</div>
+    </div>
+    <div class="hero-shot">
+      <img src="assets/shot-desktop.png" alt="Área de trabalho do Capix Linux OS, estilo Windows 10">
+      <div class="cap">Área de trabalho do Capix — barra inferior, menu Iniciar e o Capix Monitor com tudo da máquina em tempo real.</div>
     </div>
   </section>
 
   <!-- PILLARS -->
-  <section style="padding-top:20px">
+  <section style="padding-top:28px">
     <div class="wrap">
       <div class="pillars">
         <div class="pillar">
-          <div class="ic">🧩</div>
-          <h3>Três mundos de apps</h3>
-          <p>Sites como aplicativos (PWA), apps Android via Waydroid e apps Linux pela Flathub — tudo no mesmo menu Iniciar.</p>
+          <div class="ic">🪟</div>
+          <h3>Você já sabe usar</h3>
+          <p>Barra de tarefas, menu Iniciar, bandeja e relógio no mesmo lugar de sempre. Quem vem do Windows 10 se vira no primeiro minuto.</p>
+        </div>
+        <div class="pillar">
+          <div class="ic">⚡</div>
+          <h3>Leve e rápido</h3>
+          <p>Boot rápido e pouco consumo de memória. Roda bem até em notebook mais simples, sem travar e sem telemetria rodando por trás.</p>
         </div>
         <div class="pillar">
           <div class="ic">🛡️</div>
-          <h3>À prova de bagunça</h3>
-          <p>O sistema é somente-leitura. Atualiza sozinho em segundo plano e, se algo der errado, <span class="mono">bootc rollback</span> volta tudo.</p>
+          <h3>Seguro de verdade</h3>
+          <p>Sistema somente-leitura, firewall e antivírus ativos de fábrica. Se algo der errado, um comando volta para a versão anterior.</p>
         </div>
-        <div class="pillar">
-          <div class="ic">🖥️</div>
-          <h3>Familiar na hora</h3>
-          <p>Barra inferior, menu Iniciar com a capivara, bandeja e relógio. Quem usa Windows 10 se vira de primeira.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SHOWCASE -->
+  <section id="pordentro">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="kicker">Por dentro</div>
+        <h2>A cara é de Windows. A alma é Linux.</h2>
+        <p>Veja o Capix funcionando — do login à área de trabalho.</p>
+      </div>
+      <div class="showcase">
+
+        <div class="show-row">
+          <div class="show-text">
+            <span class="tag">Menu Iniciar</span>
+            <h3>Tudo onde você espera encontrar</h3>
+            <p>Menu Iniciar com busca, lista de apps em ordem alfabética e blocos dinâmicos. Apps web, Android e Linux convivem lado a lado — abre o Navegador, a Loja Capix ou o Modo gamer com um clique.</p>
+          </div>
+          <div class="show-img"><img src="assets/shot-start.png" alt="Menu Iniciar do Capix"></div>
+        </div>
+
+        <div class="show-row rev">
+          <div class="show-text">
+            <span class="tag">Login</span>
+            <h3>Uma capivara te esperando</h3>
+            <p>Na tela de login, a capivara acompanha o cursor enquanto você digita o usuário e toma um cafézinho de olhos fechados quando você digita a senha. Se errar a senha, ela balança a cabeça dizendo "não".</p>
+          </div>
+          <div class="show-img"><img src="assets/shot-login.png" alt="Tela de login do Capix com a capivara"></div>
+        </div>
+
+        <div class="show-row">
+          <div class="show-text">
+            <span class="tag">Área de trabalho</span>
+            <h3>Familiar, com superpoderes</h3>
+            <p>O Capix Monitor mostra processador, memória, placa de vídeo, discos, rede e bateria em tempo real, direto na área de trabalho. E a Capix Central (<span class="mono">Super+I</span>) reúne todo o controle do sistema num painel só.</p>
+          </div>
+          <div class="show-img"><img src="assets/shot-desktop.png" alt="Área de trabalho do Capix com o Capix Monitor"></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- TWO WORLDS -->
+  <section id="worlds" style="background:var(--bg2)">
+    <div class="wrap">
+      <div class="sec-head">
+        <div class="kicker">O melhor dos dois mundos</div>
+        <h2>Windows por fora, Linux por dentro</h2>
+        <p>O conforto que você já conhece, sobre uma base pensada para segurança e desempenho.</p>
+      </div>
+      <div class="worlds">
+        <div class="world win">
+          <h3>🪟 Do Windows</h3>
+          <div class="sub">A experiência familiar do dia a dia</div>
+          <ul>
+            <li>Layout Windows 10: barra inferior, menu Iniciar, bandeja e relógio</li>
+            <li>Compatível com documentos do Office (LibreOffice)</li>
+            <li>Roda jogos de Windows via Steam/Proton, Bottles e Lutris</li>
+            <li>Instala sites como aplicativos, igual a um PC comum</li>
+          </ul>
+        </div>
+        <div class="world lin">
+          <h3>🐧 Do Linux</h3>
+          <div class="sub">A segurança e a otimização por baixo</div>
+          <ul>
+            <li>Sistema imutável: os arquivos do sistema não se alteram</li>
+            <li>Atualização automática em segundo plano e rollback num comando</li>
+            <li>Sem vírus comuns de Windows e sem telemetria</li>
+            <li>Leve, com firewall ativo e apps em sandbox (Flatpak)</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -190,11 +297,11 @@
       <div class="sec-head">
         <div class="kicker">O que vem dentro</div>
         <h2>Pronto pra trabalhar, jogar e investigar</h2>
-        <p>Tudo embarcado de fábrica e controlado por um painel só: a <b>Capix Central</b> (<span class="mono">Super+I</span>).</p>
+        <p>Tudo embarcado de fábrica e controlado por um painel só: a <b>Capix Central</b>.</p>
       </div>
       <div class="grid">
         <div class="feat"><span class="tag o">Central</span><h3>Capix Central</h3><p>Um painel para updates e restauração, apps Android, loja de apps, IA, segurança, backup, aparência e muito mais.</p></div>
-        <div class="feat"><span class="tag">Segurança</span><h3>Proteção de série</h3><p>Firewall ativo, antivírus ClamAV com varredura semanal, e USBGuard contra dispositivos USB desconhecidos.</p></div>
+        <div class="feat"><span class="tag">Segurança</span><h3>Proteção de série</h3><p>Firewall ativo, antivírus ClamAV com varredura semanal e USBGuard contra dispositivos USB desconhecidos.</p></div>
         <div class="feat"><span class="tag">Backup</span><h3>Capix Backup</h3><p>Cópias incrementais da pasta pessoal para um disco externo, automáticas todo dia, com várias versões guardadas.</p></div>
         <div class="feat"><span class="tag">Privacidade</span><h3>Capix Privacidade</h3><p>VPN WireGuard num clique, cofre de senhas, Tor Browser, triturador de arquivos e navegador descartável.</p></div>
         <div class="feat"><span class="tag o">OSINT</span><h3>Capix Faro</h3><p>Investigação passiva de infraestrutura e ameaças: domínios, IPs, links suspeitos, arquivos, hashes, cabeçalhos de e-mail e casos em Markdown.</p></div>
@@ -206,29 +313,19 @@
     </div>
   </section>
 
-  <!-- FYDE EQUIVALENCE -->
-  <section id="fyde" style="background:var(--bg2)">
+  <!-- STEPS -->
+  <section id="passos" style="background:var(--bg2)">
     <div class="wrap">
       <div class="sec-head">
-        <div class="kicker">A ideia do FydeOS, do jeito Capix</div>
-        <h2>Como funciona por baixo</h2>
-        <p>A mesma proposta do FydeOS, construída sobre Fedora <span class="mono">bootc</span> e KDE Plasma 6.</p>
+        <div class="kicker">Primeiros passos</div>
+        <h2>Instalar é rápido</h2>
+        <p>Do download ao sistema rodando em quatro passos.</p>
       </div>
-      <div class="fyde">
-        <table>
-          <thead><tr><th>FydeOS</th><th>Capix Linux OS</th></tr></thead>
-          <tbody>
-            <tr><td>Base Chromium OS</td><td><b>Fedora Kinoite</b> (KDE Plasma 6), distribuída como imagem bootc</td></tr>
-            <tr><td>Arquivos do sistema somente-leitura</td><td><b>/usr</b> somente-leitura (OSTree/composefs)</td></tr>
-            <tr><td>Atualizações automáticas</td><td><b>capix-update.timer</b>: bootc upgrade + flatpak, aplicados no próximo boot</td></tr>
-            <tr><td>Voltar à versão anterior</td><td><b>sudo bootc rollback</b></td></tr>
-            <tr><td>Apps Android</td><td><b>Waydroid</b>, com ou sem Google Play</td></tr>
-            <tr><td>Apps Linux</td><td><b>Flatpak + Flathub</b> e distrobox para desenvolvimento</td></tr>
-            <tr><td>Apps web / PWA</td><td><b>Chromium</b> instalando sites como apps</td></tr>
-            <tr><td>Interface própria</td><td><b>Plasma com layout Windows 10</b> e a capivara no menu Iniciar</td></tr>
-            <tr><td>Criptografia de disco</td><td>Opção no instalador, com o splash pedindo a senha</td></tr>
-          </tbody>
-        </table>
+      <div class="steps">
+        <div class="step"><h3>Baixe</h3><p>Pegue a ISO do Capix (AMD/Intel ou NVIDIA) na seção de downloads.</p></div>
+        <div class="step"><h3>Grave</h3><p>Grave num pendrive com o Rufus ou o balenaEtcher (modo imagem).</p></div>
+        <div class="step"><h3>Instale</h3><p>Dê boot pelo pendrive. O instalador pergunta em qual disco instalar — nada é apagado sem você escolher.</p></div>
+        <div class="step"><h3>Pronto</h3><p>Reinicie e remova o pendrive. Daí em diante o sistema se atualiza sozinho.</p></div>
       </div>
     </div>
   </section>
@@ -249,7 +346,7 @@
           <ul>
             <li>Pendrive inicializável (~5 GB)</li>
             <li>Drivers de vídeo abertos (Mesa/Vulkan)</li>
-            <li>Tudo embarcado: Android, Flathub, Capix Central</li>
+            <li>Tudo embarcado: Android, loja de apps, Capix Central</li>
           </ul>
           <a class="btn btn-primary" id="dl-iso-amd" href="https://github.com/sandrim01/capix-linux-os/actions" target="_blank" rel="noopener">Baixar ISO (AMD/Intel)</a>
         </div>
@@ -259,7 +356,7 @@
           <p class="sub">Mesma coisa, com o driver NVIDIA proprietário já embutido na imagem.</p>
           <ul>
             <li>Pendrive inicializável (~5 GB)</li>
-            <li>Driver NVIDIA pronto (sistema é somente-leitura)</li>
+            <li>Driver NVIDIA pronto (o sistema é somente-leitura)</li>
             <li>Ideal para notebooks e desktops com GeForce</li>
           </ul>
           <a class="btn btn-ghost" id="dl-iso-nvidia" href="https://github.com/sandrim01/capix-linux-os/actions" target="_blank" rel="noopener">Baixar ISO (NVIDIA)</a>
@@ -276,7 +373,7 @@ sudo bootc switch ghcr.io/sandrim01/capix:44
 sudo bootc switch ghcr.io/sandrim01/capix-nvidia:44</code>
       </div>
 
-      <p class="dl-note">A imagem do sistema é pública e permanente no GitHub Container Registry (<code>ghcr.io/sandrim01/capix</code>). A ISO de ~5 GB fica nos artefatos do GitHub Actions — para um link de download direto e definitivo, ela pode ser publicada no Internet Archive ou num bucket (Cloudflare R2). Fala comigo que eu configuro.</p>
+      <p class="dl-note">A imagem do sistema é pública e permanente no GitHub Container Registry (<code>ghcr.io/sandrim01/capix</code>). A ISO de ~5 GB fica nos artefatos do GitHub Actions — para um link de download direto e definitivo, ela pode ser publicada no Internet Archive ou num bucket (Cloudflare R2).</p>
     </div>
   </section>
 
@@ -284,8 +381,8 @@ sudo bootc switch ghcr.io/sandrim01/capix-nvidia:44</code>
   <section id="preview">
     <div class="wrap">
       <div class="preview-card">
-        <h3>🎬 Veja o Capix em ação</h3>
-        <p>Uma prévia interativa, num arquivo só: a logo mastigando no boot, a capivara tomando cafézinho no login e a área de trabalho estilo Windows 10.</p>
+        <h3>🎬 Experimente a prévia interativa</h3>
+        <p>Um arquivo só, direto no navegador: a logo mastigando no boot, a capivara tomando cafézinho no login e a área de trabalho estilo Windows 10 — pra clicar e explorar.</p>
         <a class="btn btn-primary" href="preview.html" target="_blank" rel="noopener">Abrir prévia interativa</a>
       </div>
     </div>
@@ -301,9 +398,9 @@ sudo bootc switch ghcr.io/sandrim01/capix-nvidia:44</code>
         <div class="watermark">Desenvolvido por <b>UnbugSTI</b> — UnbugSolutions-TI</div>
       </div>
       <nav class="foot-links">
+        <a href="#pordentro">Por dentro</a>
         <a href="#destaques">Destaques</a>
         <a href="#download">Downloads</a>
-        <a href="#preview">Prévia</a>
         <a href="https://github.com/sandrim01/capix-linux-os" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </div>
