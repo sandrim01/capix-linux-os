@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baixar o Capix Linux OS — por UnbugSTI</title>
+<meta name="description" content="Baixe o Capix Linux OS: ISO instalável (AMD/Intel) e a versão NVIDIA. Passo a passo para baixar, juntar e gravar.">
+<link rel="icon" type="image/png" href="assets/logo.png">
+<style>
+  :root{
+    --bg:#0f0f11; --bg2:#151517; --card:#1b1b1d; --card2:#202023;
+    --line:#2a2a2e; --line2:#333338;
+    --tx:#f2f2f2; --tx2:#d0d0d4; --tx3:#a9a9b0;
+    --orange:#F68B2C; --orange-soft:#ffb23d; --coral:#ff6b5b; --green:#6BB33F; --blue:#5b9ee0;
+    --radius:16px; --maxw:860px;
+    --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font);background:var(--bg);color:var(--tx);line-height:1.6;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .mono{font-family:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace}
+  .accent{color:var(--orange)}
+
+  header.nav{position:sticky;top:0;z-index:50;background:rgba(15,15,17,.72);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px;max-width:1120px;margin:0 auto;padding:0 24px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:17px}
+  .brand img{width:34px;height:34px;border-radius:9px}
+  .nav-back{color:var(--tx3);font-size:14px;font-weight:500}
+  .nav-back:hover{color:var(--tx)}
+
+  .hero{text-align:center;padding:64px 0 36px}
+  .hero img{width:92px;height:92px;border-radius:22px;margin-bottom:20px;border:1px solid var(--line2);box-shadow:0 14px 44px -12px rgba(246,139,44,.4)}
+  .hero h1{font-size:clamp(30px,5vw,46px);font-weight:800;letter-spacing:-.02em}
+  .hero p{color:var(--tx2);margin-top:12px;font-size:17px}
+
+  section{padding:16px 0 48px}
+  .note{background:rgba(246,139,44,.08);border:1px solid rgba(246,139,44,.25);border-radius:12px;padding:16px 18px;color:var(--tx2);font-size:14.5px;margin-bottom:34px}
+  .note b{color:var(--tx)}
+
+  .step{display:flex;gap:18px;padding:24px 0;border-top:1px solid var(--line)}
+  .step:first-of-type{border-top:0}
+  .step .n{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(246,139,44,.14);color:var(--orange);font-weight:800;font-size:17px}
+  .step .body{flex:1;min-width:0}
+  .step h2{font-size:19px;font-weight:700}
+  .step p{color:var(--tx3);font-size:14.5px;margin-top:4px}
+
+  .parts{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .part{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .part .ic{width:38px;height:38px;flex:none;border-radius:9px;background:var(--card2);display:grid;place-items:center;color:var(--orange);font-size:18px}
+  .part .meta{flex:1;min-width:0}
+  .part .meta b{font-weight:600;font-size:14.5px;display:block}
+  .part .meta span{color:var(--tx3);font-size:12.5px}
+  .part .dl{background:var(--orange);color:#1b120d;font-weight:700;font-size:13px;padding:9px 16px;border-radius:9px;white-space:nowrap}
+  .part .dl:hover{background:var(--orange-soft)}
+
+  .tabs{display:flex;gap:6px;margin:14px 0 0}
+  .tab{background:var(--card2);border:1px solid var(--line);color:var(--tx3);font-size:13px;font-weight:600;padding:7px 14px;border-radius:9px 9px 0 0;cursor:pointer;border-bottom:0}
+  .tab.on{background:#0c0c0e;color:var(--orange);border-color:var(--line2)}
+  .codebox{background:#0c0c0e;border:1px solid var(--line2);border-radius:0 12px 12px 12px;padding:16px 18px;position:relative}
+  .codebox code{display:block;font-size:13px;color:var(--orange-soft);white-space:pre-wrap;word-break:break-all;line-height:1.7;font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace}
+  .copy{position:absolute;top:10px;right:10px;background:var(--card2);border:1px solid var(--line2);color:var(--tx3);font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer}
+  .copy:hover{color:var(--tx);border-color:var(--orange)}
+  .hashbox{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--tx3)}
+  .hashbox .h{color:var(--green);word-break:break-all;font-family:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;font-size:12.5px}
+
+  .nvidia{margin-top:40px;background:linear-gradient(180deg,rgba(107,179,63,.08),var(--card));border:1px solid rgba(107,179,63,.3);border-radius:var(--radius);padding:26px}
+  .nvidia h2{font-size:19px;font-weight:800;display:flex;align-items:center;gap:9px}
+  .nvidia p{color:var(--tx2);font-size:14.5px;margin:8px 0 14px}
+
+  footer{border-top:1px solid var(--line);padding:34px 0 60px;text-align:center;color:var(--tx3);font-size:13px}
+  footer b{color:var(--tx2)}
+  footer a{color:var(--orange)}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-in">
+    <a class="brand" href="index.html"><img src="assets/logo.png" alt="Capix">Capix<span class="accent">OS</span></a>
+    <a class="nav-back" href="index.html">← Voltar ao site</a>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <img src="assets/logo.png" alt="Capix">
+    <h1>Baixar o Capix Linux OS</h1>
+    <p>Versão AMD/Intel · ~5 GB · instalador que pergunta o disco</p>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="note">
+      📦 O GitHub limita cada arquivo a 2 GB, então a ISO vem em <b>3 partes</b>. É só baixar as três, juntar num arquivo só com um comando e gravar. Parece trabalhoso, mas são 2 minutos.
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step">
+      <div class="n">1</div>
+      <div class="body">
+        <h2>Baixe as 3 partes</h2>
+        <p>Salve todas na mesma pasta (ex.: Downloads).</p>
+        <div class="parts">
+          <div class="part">
+            <div class="ic">💿</div>
+            <div class="meta"><b>Parte 1 de 3</b><span>capix-amd-intel.iso.part00.bin · ~1,9 GB</span></div>
+            <a class="dl" href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/capix-amd-intel.iso.part00.bin">Baixar</a>
+          </div>
+          <div class="part">
+            <div class="ic">💿</div>
+            <div class="meta"><b>Parte 2 de 3</b><span>capix-amd-intel.iso.part01.bin · ~1,9 GB</span></div>
+            <a class="dl" href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/capix-amd-intel.iso.part01.bin">Baixar</a>
+          </div>
+          <div class="part">
+            <div class="ic">💿</div>
+            <div class="meta"><b>Parte 3 de 3</b><span>capix-amd-intel.iso.part02.bin · ~1,2 GB</span></div>
+            <a class="dl" href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/capix-amd-intel.iso.part02.bin">Baixar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step">
+      <div class="n">2</div>
+      <div class="body">
+        <h2>Junte as partes numa ISO só</h2>
+        <p>Abra o terminal na pasta onde estão as partes e rode o comando do seu sistema.</p>
+        <div class="tabs">
+          <button class="tab on" data-os="win">Windows</button>
+          <button class="tab" data-os="nix">Linux / macOS</button>
+        </div>
+        <div class="codebox" data-os="win">
+          <button class="copy" data-copy="copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso">copiar</button>
+          <code>copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso</code>
+        </div>
+        <div class="codebox" data-os="nix" style="display:none">
+          <button class="copy" data-copy="cat capix-amd-intel.iso.part*.bin > capix.iso">copiar</button>
+          <code>cat capix-amd-intel.iso.part*.bin &gt; capix.iso</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step">
+      <div class="n">3</div>
+      <div class="body">
+        <h2>Confira se juntou certo <span style="color:var(--tx3);font-weight:400;font-size:14px">(opcional)</span></h2>
+        <p>O código abaixo (SHA-256) deve bater com o da sua ISO.</p>
+        <div class="hashbox">
+          <div class="h">7b1ea18c658480d44212bf5793ed9475b8364e9fee44972fb477a309f192b49a</div>
+          <div style="margin-top:8px">Windows: <span class="mono">certutil -hashfile capix.iso SHA256</span> · Linux/macOS: <span class="mono">sha256sum capix.iso</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step">
+      <div class="n">4</div>
+      <div class="body">
+        <h2>Grave e instale</h2>
+        <p>Grave a <span class="mono">capix.iso</span> num pendrive com o <b>Rufus</b> ou o <b>balenaEtcher</b> (modo imagem/DD). Dê boot pelo pendrive — o instalador pergunta em qual disco instalar, e nada é apagado sem você escolher. Ao terminar, remova o pendrive e reinicie.</p>
+      </div>
+    </div>
+
+    <!-- NVIDIA -->
+    <div class="nvidia">
+      <h2>🟢 Placa NVIDIA</h2>
+      <p>Instale a versão acima normalmente. Depois, troque para a imagem com o driver NVIDIA proprietário já embutido — um comando no terminal do Capix:</p>
+      <div class="codebox" style="border-radius:12px">
+        <button class="copy" data-copy="sudo bootc switch ghcr.io/sandrim01/capix-nvidia:44">copiar</button>
+        <code>sudo bootc switch ghcr.io/sandrim01/capix-nvidia:44</code>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Capix Linux OS — desenvolvido por <b>UnbugSTI</b> · <a href="index.html">Voltar ao site</a> · <a href="https://github.com/sandrim01/capix-linux-os" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
+
+<script>
+  // tabs Windows / Linux
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click',function(){
+      var os=t.dataset.os;
+      document.querySelectorAll('.tab').forEach(function(x){x.classList.toggle('on',x.dataset.os===os);});
+      document.querySelectorAll('.codebox[data-os]').forEach(function(c){c.style.display=(c.dataset.os===os)?'block':'none';});
+    });
+  });
+  // copiar
+  document.querySelectorAll('.copy').forEach(function(b){
+    b.addEventListener('click',function(){
+      navigator.clipboard.writeText(b.dataset.copy).then(function(){
+        var t=b.textContent;b.textContent='copiado ✓';setTimeout(function(){b.textContent=t},1500);
+      });
+    });
+  });
+</script>
+</body>
+</html>
