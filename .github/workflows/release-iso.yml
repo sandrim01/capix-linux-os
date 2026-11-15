@@ -1,0 +1,68 @@
+# Publica a ISO (do build mais recente) como Release pública do GitHub.
+#   - Releases podem ser baixadas sem login e com link direto (ao contrário dos artefatos).
+#   - A ISO (~5 GB) é dividida em partes < 2 GB (limite por arquivo do GitHub).
+# Dispara sozinho após cada build bem-sucedido, e também manualmente (workflow_dispatch).
+name: release-iso
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["build-capix"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Descobrir o build e baixar a ISO
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eux
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            RUN_ID=${{ github.event.workflow_run.id }}
+          else
+            RUN_ID=$(gh run list --workflow build.yml --status success --limit 1 \
+                      --json databaseId -q '.[0].databaseId' -R "$GITHUB_REPOSITORY")
+          fi
+          echo "RUN_ID=$RUN_ID"
+          gh run download "$RUN_ID" -n capix-iso -D iso -R "$GITHUB_REPOSITORY"
+          find iso -type f -printf '%s\t%p\n'
+
+      - name: Dividir, somar hash e publicar a Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eux
+          ISO=$(find iso -name '*.iso' | head -1)
+          test -n "$ISO"
+          WORK=release_out; mkdir -p "$WORK"
+          HASH=$(sha256sum "$ISO" | cut -d' ' -f1)
+          SIZE=$(du -h "$ISO" | cut -f1)
+          # partes de 1900 MiB (< 2 GiB por arquivo)
+          split -b 1900M -d --additional-suffix=.bin "$ISO" "$WORK/capix-amd-intel.iso.part"
+          printf '%s  capix.iso\n' "$HASH" > "$WORK/SHA256.txt"
+          ls -lh "$WORK"
+          NOTES=$(cat <<EOF
+          ISO do Capix Linux OS (AMD/Intel) — tamanho $SIZE.
+
+          O GitHub limita cada arquivo a 2 GB, então a ISO vem **dividida em partes**. Baixe **todas** as partes \`.bin\` na mesma pasta e junte:
+
+          - **Linux / macOS:** \`cat capix-amd-intel.iso.part*.bin > capix.iso\`
+          - **Windows (PowerShell):** \`cmd /c copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso\`
+
+          Depois confira o hash (deve bater com \`SHA256.txt\`):
+          - \`sha256sum capix.iso\` → \`$HASH\`
+
+          Grave a \`capix.iso\` num pendrive com Rufus ou balenaEtcher (modo imagem). O instalador pergunta em qual disco instalar.
+          EOF
+          )
+          gh release delete iso-latest -y --cleanup-tag -R "$GITHUB_REPOSITORY" 2>/dev/null || true
+          gh release create iso-latest -R "$GITHUB_REPOSITORY" \
+            --title "Capix ISO — AMD/Intel (mais recente)" \
+            --notes "$NOTES" \
+            "$WORK"/capix-amd-intel.iso.part*.bin "$WORK/SHA256.txt"

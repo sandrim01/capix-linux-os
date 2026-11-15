@@ -348,22 +348,22 @@
             <li>Drivers de vídeo abertos (Mesa/Vulkan)</li>
             <li>Tudo embarcado: Android, loja de apps, Capix Central</li>
           </ul>
-          <a class="btn btn-primary" id="dl-iso-amd" href="https://github.com/sandrim01/capix-linux-os/actions" target="_blank" rel="noopener">Baixar ISO (AMD/Intel)</a>
+          <a class="btn btn-primary" id="dl-iso-amd" href="https://github.com/sandrim01/capix-linux-os/releases/tag/iso-latest" target="_blank" rel="noopener">Baixar ISO (AMD/Intel)</a>
         </div>
 
         <div class="dl-card">
-          <h3>💿 Capix — ISO NVIDIA <span class="dl-badge">NVIDIA</span></h3>
-          <p class="sub">Mesma coisa, com o driver NVIDIA proprietário já embutido na imagem.</p>
+          <h3>🟢 Capix — NVIDIA <span class="dl-badge">NVIDIA</span></h3>
+          <p class="sub">Instale a versão AMD/Intel ao lado e troque para a imagem NVIDIA (driver proprietário já embutido) com um comando.</p>
           <ul>
-            <li>Pendrive inicializável (~5 GB)</li>
             <li>Driver NVIDIA pronto (o sistema é somente-leitura)</li>
             <li>Ideal para notebooks e desktops com GeForce</li>
+            <li>Atualiza sozinho, igual à versão padrão</li>
           </ul>
-          <a class="btn btn-ghost" id="dl-iso-nvidia" href="https://github.com/sandrim01/capix-linux-os/actions" target="_blank" rel="noopener">Baixar ISO (NVIDIA)</a>
+          <a class="btn btn-ghost" id="dl-iso-nvidia" href="#img-switch">Ver como trocar para NVIDIA</a>
         </div>
       </div>
 
-      <div class="codebox">
+      <div class="codebox" id="img-switch">
         <div class="lbl">Já usa o Capix? Troque para a imagem oficial e receba updates automáticos:</div>
         <button class="copy" data-copy="sudo bootc switch ghcr.io/sandrim01/capix:44">copiar</button>
         <code># AMD / Intel
