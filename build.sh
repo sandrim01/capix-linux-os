@@ -39,16 +39,21 @@ fi
 
 case "${1:-}" in
   iso|vm)
-    TYPE=anaconda-iso; CFG=()
-    if [ "$1" = vm ]; then TYPE=qcow2; CFG=(-v "$PWD/config/vm-user.toml:/config.toml:ro"); fi
+    # MOUNT: volume do podman (antes da imagem do BIB)  |  BIBARG: argumento do BIB (depois)
+    TYPE=anaconda-iso
+    MOUNT=(-v "$PWD/config/iso-interactive.toml:/config.toml:ro"); BIBARG=(--config /config.toml)
+    if [ "$1" = vm ]; then
+      TYPE=qcow2
+      MOUNT=(-v "$PWD/config/vm-user.toml:/config.toml:ro"); BIBARG=(--config /config.toml)
+    fi
     mkdir -p output
     echo "==> Gerando $TYPE"
     sudo podman run --rm -it --privileged --pull=newer \
       --security-opt label=type:unconfined_t \
       -v "$PWD/output:/output" \
       -v /var/lib/containers/storage:/var/lib/containers/storage \
-      "${CFG[@]}" \
-      "$BIB" --type "$TYPE" --rootfs btrfs "$IMAGE"
+      "${MOUNT[@]}" \
+      "$BIB" --type "$TYPE" --rootfs btrfs "${BIBARG[@]}" "$IMAGE"
     echo "==> Pronto: $(ls -d output/*)"
     ;;
 esac

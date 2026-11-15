@@ -1,0 +1,26 @@
+# Capix Linux OS — instalador INTERATIVO (seguro)
+#
+# Por padrão o tipo "anaconda-iso" instala SOZINHO no primeiro disco que encontrar
+# e reinicia automaticamente — o que apaga dados sem perguntar e faz a máquina
+# dar boot de novo no pendrive, reinstalando em loop.
+#
+# Este kickstart troca esse comportamento por uma instalação gráfica em que VOCÊ
+# escolhe o disco e o particionamento. O bootc-image-builder adiciona sozinho o
+# comando "ostreecontainer" (a imagem do sistema Capix), então aqui só definimos
+# o resto da instalação.
+[customizations.installer.kickstart]
+contents = """
+# Instalação gráfica interativa, em português do Brasil
+graphical
+lang pt_BR.UTF-8
+keyboard --vckeymap=br-abnt2
+timezone America/Sao_Paulo --utc
+
+# De propósito NÃO há clearpart/autopart/part aqui: assim o Anaconda abre a tela
+# "Destino da instalação" para você escolher o disco e como particionar
+# (inclusive preservando um Windows ou dados já existentes no notebook).
+
+# De propósito NÃO há "reboot"/"halt": ao terminar, o instalador espera você
+# clicar em "Reiniciar". Isso dá tempo de remover o pendrive antes do primeiro
+# boot — é o que impede o loop de reinstalação.
+"""
