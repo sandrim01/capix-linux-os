@@ -1,7 +1,6 @@
 // Capix Linux OS — tema de login do SDDM (Qt 6 / SDDM >= 0.21)
 // Tela de bloqueio estilo Windows 10 + login com a capivara interativa.
 import QtQuick 2.15
-import QtQuick.Effects
 
 Rectangle {
     id: root
@@ -20,17 +19,13 @@ Rectangle {
         anchors.fill: parent
         source: config.background || "assets/background.png"
         fillMode: Image.PreserveAspectCrop
-        visible: false
     }
-    MultiEffect {
+    // escurece o fundo ao desbloquear (substitui o desfoque, sem depender de QtQuick.Effects)
+    Rectangle {
         anchors.fill: parent
-        source: bg
-        blurEnabled: !root.locked
-        blur: root.locked ? 0 : 1.0
-        blurMax: 64
-        brightness: root.locked ? 0 : -0.25
-        Behavior on blur { NumberAnimation { duration: 350 } }
-        Behavior on brightness { NumberAnimation { duration: 350 } }
+        color: "black"
+        opacity: root.locked ? 0 : 0.35
+        Behavior on opacity { NumberAnimation { duration: 350 } }
     }
 
     function unlock() {
