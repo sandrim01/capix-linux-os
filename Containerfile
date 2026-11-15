@@ -25,7 +25,7 @@ RUN dnf -y install \
         libnotify \
         python3-dbus \
         rsync usbguard \
-        cups cups-filters ipp-usb plasma-print-manager \
+        cups cups-filters ipp-usb plasma-print-manager sddm \
         sane-backends sane-airscan skanpage avahi nss-mdns \
     && (dnf -y remove firefox firefox-langpacks || true) \
     && dnf clean all
@@ -92,6 +92,13 @@ RUN set -eux; \
     systemctl enable cups.socket avahi-daemon.service ipp-usb.service; \
     systemctl enable capix-flathub.service capix-first-apps.service capix-update.timer \
                      capix-antivirus.timer clamav-freshclam.service firewalld.service; \
+    # Usa o SDDM como gerenciador de login (necessário para o tema capix da capivara).
+    # O Kinoite pode vir com o plasma-login-greeter ativo; forçamos o SDDM.
+    systemctl disable plasma-login-greeter.service plasma-login.service 2>/dev/null || true; \
+    if [ -f /usr/lib/systemd/system/sddm.service ]; then \
+        systemctl enable sddm.service 2>/dev/null || true; \
+        ln -sf /usr/lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service; \
+    fi; \
     # ClamAV: permite rodar a atualização de definições (o Fedora vem com "Example" no arquivo)
     sed -i 's/^Example/#Example/' /etc/freshclam.conf 2>/dev/null || true; \
     chmod 0755 /usr/libexec/capix/* /usr/bin/capix-*; \
