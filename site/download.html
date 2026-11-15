@@ -93,8 +93,19 @@
 
 <section>
   <div class="wrap">
+    <style>
+      .edsel{display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap}
+      .edtab{flex:1;min-width:220px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;color:var(--tx3);transition:border-color .15s,background .15s;font-family:var(--font)}
+      .edtab b{display:block;color:var(--tx);font-size:15px}
+      .edtab span{font-size:12.5px}
+      .edtab.on{border-color:var(--orange);background:linear-gradient(180deg,rgba(246,139,44,.08),var(--card));color:var(--tx2)}
+    </style>
+    <div class="edsel">
+      <button class="edtab on" data-ed="desktop"><b>🖥️ Capix Desktop</b><span>Uso geral · modo gamer · AMD/Intel</span></button>
+      <button class="edtab" data-ed="sec"><b>🛡️ Capix Segurança</b><span>OSINT + ferramentas de pentest</span></button>
+    </div>
     <div class="note">
-      📦 O GitHub limita cada arquivo a 2 GB, então a ISO vem em <b>3 partes</b>. É só baixar as três, juntar num arquivo só com um comando e gravar. Parece trabalhoso, mas são 2 minutos.
+      📦 Cada ISO vem em <b>3 partes</b> (limite de 2 GB por arquivo do GitHub). Baixe as três, junte num arquivo só com um comando e grave. São 2 minutos.
     </div>
 
     <!-- STEP 1 -->
@@ -106,18 +117,18 @@
         <div class="parts">
           <div class="part">
             <div class="ic">💿</div>
-            <div class="meta"><b>Parte 1 de 3</b><span>capix-amd-intel.iso.part00.bin · ~1,9 GB</span></div>
-            <a class="dl" href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/capix-amd-intel.iso.part00.bin">Baixar</a>
+            <div class="meta"><b>Parte 1 de 3</b><span id="partname0">capix-amd-intel.iso.part00.bin</span></div>
+            <a class="dl" id="part0" href="#">Baixar</a>
           </div>
           <div class="part">
             <div class="ic">💿</div>
-            <div class="meta"><b>Parte 2 de 3</b><span>capix-amd-intel.iso.part01.bin · ~1,9 GB</span></div>
-            <a class="dl" href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/capix-amd-intel.iso.part01.bin">Baixar</a>
+            <div class="meta"><b>Parte 2 de 3</b><span id="partname1">capix-amd-intel.iso.part01.bin</span></div>
+            <a class="dl" id="part1" href="#">Baixar</a>
           </div>
           <div class="part">
             <div class="ic">💿</div>
-            <div class="meta"><b>Parte 3 de 3</b><span>capix-amd-intel.iso.part02.bin · ~1,2 GB</span></div>
-            <a class="dl" href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/capix-amd-intel.iso.part02.bin">Baixar</a>
+            <div class="meta"><b>Parte 3 de 3</b><span id="partname2">capix-amd-intel.iso.part02.bin</span></div>
+            <a class="dl" id="part2" href="#">Baixar</a>
           </div>
         </div>
       </div>
@@ -134,13 +145,13 @@
           <button class="tab" data-os="nix">Linux / macOS</button>
         </div>
         <div class="codebox" data-os="win">
-          <button class="copy" data-copy="cmd /c copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso">copiar</button>
-          <code>cmd /c copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso</code>
+          <button class="copy" id="copywin" data-copy="">copiar</button>
+          <code id="codewin"></code>
           <div style="margin-top:10px;color:var(--tx3);font-size:12.5px;font-family:var(--font)">Funciona no PowerShell e no Prompt de Comando. Abra a pasta das partes, segure Shift + clique direito → "Abrir no Terminal", e cole.</div>
         </div>
         <div class="codebox" data-os="nix" style="display:none">
-          <button class="copy" data-copy="cat capix-amd-intel.iso.part*.bin > capix.iso">copiar</button>
-          <code>cat capix-amd-intel.iso.part*.bin &gt; capix.iso</code>
+          <button class="copy" id="copynix" data-copy="">copiar</button>
+          <code id="codenix"></code>
         </div>
       </div>
     </div>
@@ -150,10 +161,10 @@
       <div class="n">3</div>
       <div class="body">
         <h2>Confira se juntou certo <span style="color:var(--tx3);font-weight:400;font-size:14px">(opcional)</span></h2>
-        <p>O código abaixo (SHA-256) deve bater com o da sua ISO.</p>
+        <p>Gere o SHA-256 da sua ISO e compare com o publicado na release (sempre atualizado).</p>
         <div class="hashbox">
-          <div class="h">7b1ea18c658480d44212bf5793ed9475b8364e9fee44972fb477a309f192b49a</div>
-          <div style="margin-top:8px">Windows: <span class="mono">certutil -hashfile capix.iso SHA256</span> · Linux/macOS: <span class="mono">sha256sum capix.iso</span></div>
+          <div>Windows: <span class="mono">certutil -hashfile capix.iso SHA256</span> · Linux/macOS: <span class="mono">sha256sum capix.iso</span></div>
+          <div style="margin-top:8px">Compare com o arquivo <a href="https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/SHA256.txt" target="_blank" rel="noopener" style="color:var(--orange)">SHA256.txt</a> da release.</div>
         </div>
       </div>
     </div>
@@ -168,7 +179,7 @@
     </div>
 
     <!-- NVIDIA -->
-    <div class="nvidia">
+    <div class="nvidia" id="nvidia">
       <h2>🟢 Placa NVIDIA</h2>
       <p>Instale a versão acima normalmente. Depois, troque para a imagem com o driver NVIDIA proprietário já embutido — um comando no terminal do Capix:</p>
       <div class="codebox" style="border-radius:12px">
@@ -203,6 +214,31 @@
       });
     });
   });
+  // Edição (Desktop / Segurança)
+  var DL = "https://github.com/sandrim01/capix-linux-os/releases/download/iso-latest/";
+  var EDITIONS = {
+    desktop: { prefix: "capix-amd-intel", nvidia: true },
+    sec:     { prefix: "capix-sec", nvidia: false }
+  };
+  function applyEdition(ed){
+    var e = EDITIONS[ed], p = e.prefix;
+    for (var i=0;i<3;i++){
+      document.getElementById('part'+i).href = DL + p + '.iso.part0'+i+'.bin';
+      document.getElementById('partname'+i).textContent = p + '.iso.part0'+i+'.bin';
+    }
+    var win = 'cmd /c copy /b '+p+'.iso.part00.bin+'+p+'.iso.part01.bin+'+p+'.iso.part02.bin '+p+'.iso';
+    var nix = 'cat '+p+'.iso.part*.bin > '+p+'.iso';
+    document.getElementById('codewin').textContent = win;
+    document.getElementById('copywin').dataset.copy = win;
+    document.getElementById('codenix').textContent = nix;
+    document.getElementById('copynix').dataset.copy = nix;
+    document.getElementById('nvidia').style.display = e.nvidia ? '' : 'none';
+    document.querySelectorAll('.edtab').forEach(function(x){ x.classList.toggle('on', x.dataset.ed===ed); });
+  }
+  document.querySelectorAll('.edtab').forEach(function(t){
+    t.addEventListener('click', function(){ applyEdition(t.dataset.ed); });
+  });
+  applyEdition('desktop');
 </script>
 </body>
 </html>

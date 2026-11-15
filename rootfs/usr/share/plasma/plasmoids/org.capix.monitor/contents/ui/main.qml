@@ -107,11 +107,11 @@ PlasmoidItem {
     component Muted: Text { color: root.muted; font.pixelSize: 11; elide: Text.ElideRight }
     component Section: RowLayout {
         property string title
-        property string right
+        property string rightText
         Layout.fillWidth: true; Layout.topMargin: 6
         Text { text: parent.title; color: root.orange; font.pixelSize: 11; font.bold: true; font.letterSpacing: 1 }
         Item { Layout.fillWidth: true }
-        Muted { text: parent.right }
+        Muted { text: parent.rightText }
     }
 
     fullRepresentation: Item {
@@ -143,7 +143,7 @@ PlasmoidItem {
                 }
 
                 // ---------- PROCESSADOR ----------
-                Section { title: "PROCESSADOR"; right: root.m ? (root.m.cpu.freq ? (root.m.cpu.freq / 1000).toFixed(2) + " GHz" : "") : "" }
+                Section { title: "PROCESSADOR"; rightText: root.m ? (root.m.cpu.freq ? (root.m.cpu.freq / 1000).toFixed(2) + " GHz" : "") : "" }
                 RowLayout {
                     Layout.fillWidth: true
                     Text { text: root.m ? Math.round(root.m.cpu.usage) + "%" : "—"; color: root.cream; font.pixelSize: 26; font.weight: Font.Light; Layout.preferredWidth: 70 }
@@ -172,7 +172,7 @@ PlasmoidItem {
                 }
 
                 // ---------- MEMÓRIA ----------
-                Section { title: "MEMÓRIA"; right: root.m ? root.gb(root.m.mem.used) + " de " + root.gb(root.m.mem.total) : "" }
+                Section { title: "MEMÓRIA"; rightText: root.m ? root.gb(root.m.mem.used) + " de " + root.gb(root.m.mem.total) : "" }
                 Bar { value: root.m && root.m.mem.total ? root.m.mem.used / root.m.mem.total * 100 : 0 }
                 Muted {
                     visible: root.m && root.m.mem.swap_total > 0
@@ -186,7 +186,7 @@ PlasmoidItem {
                         Layout.fillWidth: true; spacing: 3
                         Section {
                             title: "PLACA DE VÍDEO · " + modelData.name.toUpperCase()
-                            right: (modelData.temp ? Math.round(modelData.temp) + " °C" : "") + (modelData.power ? " · " + Math.round(modelData.power) + " W" : "")
+                            rightText: (modelData.temp ? Math.round(modelData.temp) + " °C" : "") + (modelData.power ? " · " + Math.round(modelData.power) + " W" : "")
                         }
                         RowLayout {
                             Layout.fillWidth: true
@@ -202,7 +202,7 @@ PlasmoidItem {
                 }
 
                 // ---------- DISCOS ----------
-                Section { title: "ARMAZENAMENTO"; right: root.m ? "↓ " + root.rate(root.m.diskio.read) + "  ↑ " + root.rate(root.m.diskio.write) : "" }
+                Section { title: "ARMAZENAMENTO"; rightText: root.m ? "↓ " + root.rate(root.m.diskio.read) + "  ↑ " + root.rate(root.m.diskio.write) : "" }
                 Repeater {
                     model: root.m ? root.m.disks : []
                     ColumnLayout {
@@ -218,7 +218,7 @@ PlasmoidItem {
                 Muted { visible: root.m && root.m.nvme_temp; text: root.m && root.m.nvme_temp ? "SSD: " + Math.round(root.m.nvme_temp) + " °C" : "" }
 
                 // ---------- REDE ----------
-                Section { title: "REDE"; right: "" }
+                Section { title: "REDE"; rightText: "" }
                 RowLayout {
                     Layout.fillWidth: true
                     Label { text: "↓ " + (root.m ? root.rate(root.m.net.down) : "—"); color: root.green; Layout.fillWidth: true }
@@ -230,7 +230,7 @@ PlasmoidItem {
                 RowLayout {
                     visible: root.m && root.m.battery
                     Layout.fillWidth: true
-                    Section { title: "BATERIA"; right: root.m && root.m.battery ? (root.m.battery.status === "Charging" ? "carregando" : root.m.battery.status === "Full" ? "carregada" : "na bateria") + (root.m.battery.watts ? " · " + root.m.battery.watts.toFixed(1) + " W" : "") : "" }
+                    Section { title: "BATERIA"; rightText: root.m && root.m.battery ? (root.m.battery.status === "Charging" ? "carregando" : root.m.battery.status === "Full" ? "carregada" : "na bateria") + (root.m.battery.watts ? " · " + root.m.battery.watts.toFixed(1) + " W" : "") : "" }
                 }
                 RowLayout {
                     visible: root.m && root.m.battery
@@ -240,7 +240,7 @@ PlasmoidItem {
                 }
 
                 // ---------- PROCESSOS ----------
-                Section { title: "PROCESSOS"; right: root.m ? root.m.nproc + " em execução · carga " + root.m.load[0].toFixed(2) : "" }
+                Section { title: "PROCESSOS"; rightText: root.m ? root.m.nproc + " em execução · carga " + root.m.load[0].toFixed(2) : "" }
                 Repeater {
                     model: root.m ? root.m.procs : []
                     RowLayout {

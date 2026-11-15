@@ -180,6 +180,19 @@ def status():
     st["privacy"] = privacy_status()
     st["user"] = os.environ.get("USER", "")
     st["welcome_done"] = os.path.exists(WELCOME_FLAG)
+    ed = "desktop"
+    try:
+        with open("/usr/share/capix/edition") as _f:
+            ed = _f.read().strip() or "desktop"
+    except Exception:
+        pass
+    st["edition"] = ed
+    st["features"] = {
+        "faro": os.path.exists("/usr/bin/capix-faro"),
+        "gamer": os.path.exists("/usr/libexec/capix/gamer-session"),
+        "pentest": ed == "sec",
+        "ia": False,
+    }
     return st
 
 

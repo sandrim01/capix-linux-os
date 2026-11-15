@@ -4,6 +4,9 @@ ARG FEDORA_VERSION=44
 FROM quay.io/fedora/fedora-kinoite:${FEDORA_VERSION}
 ARG FEDORA_VERSION=44
 
+# Edição do Capix: "desktop" (uso geral, com modo gamer) ou "sec" (OSINT + pentest).
+ARG CAPIX_EDITION=desktop
+
 LABEL org.opencontainers.image.title="Capix Linux OS" \
       org.opencontainers.image.vendor="UnbugSTI (UnbugSolutions-TI)" \
       org.opencontainers.image.description="Linux com apps web, Android e Linux num desktop estilo Windows 10" \
@@ -20,14 +23,28 @@ RUN dnf -y install \
         cage \
         clamav clamav-update \
         libnotify \
-        gamemode gamescope mangohud \
         python3-dbus \
-        bind-utils perl-Image-ExifTool \
         rsync usbguard \
         cups cups-filters ipp-usb plasma-print-manager \
         sane-backends sane-airscan skanpage avahi nss-mdns \
     && (dnf -y remove firefox firefox-langpacks || true) \
     && dnf clean all
+
+# 1a) Pacotes específicos da edição
+#   - desktop: modo gamer (GameMode/Gamescope/MangoHud)
+#   - sec: ferramentas de OSINT/pentest + utilitários de rede
+RUN set -eux; \
+    if [ "$CAPIX_EDITION" = "desktop" ]; then \
+        dnf -y install gamemode gamescope mangohud bind-utils; \
+    elif [ "$CAPIX_EDITION" = "sec" ]; then \
+        dnf -y install --skip-unavailable \
+            nmap nmap-ncat tcpdump wireshark-cli whois bind-utils \
+            perl-Image-ExifTool masscan \
+            john hydra hashcat sqlmap nikto aircrack-ng \
+            radare2 binwalk foremost openssl \
+            git python3-pip jq; \
+    fi; \
+    dnf clean all
 
 # 1b) Placas de vídeo AMD e Intel: drivers open source (Mesa), Vulkan 64 e 32 bits
 #     (jogos e Proton), decodificação de vídeo (VA-API) e utilitários.
@@ -42,6 +59,20 @@ RUN dnf -y install \
 
 # 2) Arquivos do Capix (tema de login, splash, layout Win10, wallpapers, serviços)
 COPY rootfs/ /
+
+# 2a) Aplica a edição: grava o marcador e remove o que não pertence a ela
+RUN set -eux; \
+    mkdir -p /usr/share/capix; printf '%s\n' "${CAPIX_EDITION}" > /usr/share/capix/edition; \
+    if [ "$CAPIX_EDITION" = "desktop" ]; then \
+        rm -f /usr/libexec/capix/faro-server.py /usr/bin/capix-faro \
+              /usr/libexec/capix/capix-pentest \
+              /usr/share/applications/capix-faro.desktop; \
+        rm -rf /usr/share/capix/faro; \
+    fi; \
+    if [ "$CAPIX_EDITION" = "sec" ]; then \
+        rm -f /usr/libexec/capix/gamer-session /usr/libexec/capix/gamer-dnd \
+              /usr/share/wayland-sessions/capix-gamer.desktop 2>/dev/null || true; \
+    fi
 
 # 3) Identidade, aparência e serviços
 RUN set -eux; \

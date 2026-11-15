@@ -157,11 +157,21 @@ const icon = (k, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none"
 
 const PAGES = [
   ['inicio','Início','home'],['atualizacoes','Atualizações e restauração','upd'],['android','Apps Android','android'],
-  ['apps','Apps recomendados','apps'],['jogos','Modo gamer','game'],['ia','Assistente de IA','ai'],['seguranca','Segurança','shield'],
+  ['apps','Apps recomendados','apps'],['jogos','Modo gamer','game'],['ia','Assistente de IA','ai'],['seguranca','Segurança','shield'],['pentest','Pentest & OSINT','shield'],
   ['backup','Backup','save'],['privacidade','Privacidade','lock'],['perfis','Perfis de trabalho','profile'],['impressoras','Impressoras e scanners','printer'],
   ['papeis','Papéis de parede','wall'],['video','Placa de vídeo','screen'],['aparencia','Aparência','paint'],['quiosque','Modo quiosque','kiosk'],['sobre','Sobre','info'],
 ];
 let S = null, page = 'inicio';
+
+// Mostra/esconde recursos conforme a edição (desktop x sec)
+function featOn(id){
+  const f = (S && S.features) || {};
+  if (id === 'jogos') return f.gamer !== false;
+  if (id === 'ia') return f.ia === true;
+  if (id === 'faro') return f.faro === true;
+  if (id === 'pentest') return f.pentest === true;
+  return true;
+}
 
 async function api(path, opt) {
   const r = await fetch(BASE + path, opt);
@@ -209,7 +219,7 @@ const VIEWS = {
          ['privacidade','lock','Privacidade', 'VPN, cofre de senhas e Tor'],
          ['video','screen','Placa de vídeo', (S.gpu&&S.gpu.recomendacao&&S.gpu.recomendacao.nivel==='trocar-imagem') ? 'Driver NVIDIA recomendado' : 'Drivers e recursos 3D'],
          ['papeis','wall','Papéis de parede', `${S.wallpapers.list.length} cenários em estilo anime`]]
-        .map(([p,ic,t,s]) => `<button class="tile" data-go="${p}">${icon(ic)}<b>${t}</b><span>${s}</span></button>`).join('')}
+        .filter(([p]) => featOn(p)).map(([p,ic,t,s]) => `<button class="tile" data-go="${p}">${icon(ic)}<b>${t}</b><span>${s}</span></button>`).join('')}
     </div>
     <h2>Atalhos</h2>
     ${card('wifi','Rede e Internet','Wi-Fi, cabo, VPN', btn('Abrir','open:wifi'))}
@@ -292,8 +302,8 @@ const VIEWS = {
       `Última verificação: ${esc(v.last || 'nunca')}${v.scanned ? ` · ${v.scanned.toLocaleString('pt-BR')} arquivos` : ''}`,
       btn('Verificar agora','admin:av-scan','pri', v.running))}
     ${card('upd','Atualizar definições de vírus','Baixa as assinaturas mais recentes do ClamAV.', btn('Atualizar','admin:av-update'))}
-    <h2>Investigação</h2>
-    ${card('shield','Capix Faro','Investigue domínios, IPs, links, arquivos e e-mails suspeitos e registre os achados em casos.', btn('Abrir','open:faro','pri'))}
+    ${featOn('faro') ? `<h2>Investigação</h2>
+    ${card('shield','Capix Faro','Investigue domínios, IPs, links, arquivos e e-mails suspeitos e registre os achados em casos.', btn('Abrir','open:faro','pri'))}` : ''}
     ${card('shield','Verificação semanal automática','Verifica a pasta pessoal uma vez por semana, em segundo plano.', `<span class="pill ${v.auto?'ok':'warn'}">${v.auto?'Ativa':'Desligada'}</span>`)}`;
   },
 
@@ -345,9 +355,32 @@ const VIEWS = {
     ${card('lock','Triturar um arquivo','Apaga um arquivo sobrescrevendo os dados, sem chance de recuperação.', btn('Escolher arquivo','shred-file'))}`;
   },
 
+  pentest: () => {
+    const tools = [
+      ['nmap','Nmap','Varredura de portas e serviços'],
+      ['tshark','TShark / Wireshark','Captura e análise de pacotes'],
+      ['tcpdump','tcpdump','Sniffer de rede via terminal'],
+      ['sqlmap','sqlmap','Testes de injeção SQL'],
+      ['nikto','Nikto','Scanner de vulnerabilidades web'],
+      ['john / hashcat','John / Hashcat','Quebra de hashes'],
+      ['hydra','Hydra','Força bruta de autenticação'],
+      ['aircrack-ng','Aircrack-ng','Auditoria de redes Wi-Fi'],
+      ['radare2','radare2','Engenharia reversa'],
+      ['exiftool','ExifTool','Metadados de arquivos'],
+    ];
+    return `<h1>Pentest &amp; OSINT</h1>
+    <p class="muted">Edição de segurança do Capix. As ferramentas abaixo já vêm instaladas e disponíveis no terminal.</p>
+    ${featOn('faro') ? card('shield','Capix Faro','Investigação passiva de domínios, IPs, links, arquivos, hashes e e-mails, com registro em casos.', btn('Abrir Faro','open:faro','pri')) : ''}
+    <h2>Ferramentas instaladas</h2>
+    <div class="grid">
+      ${tools.map(([cmd,name,desc]) => `<div class="tile" style="cursor:default;text-align:left"><b>${esc(name)}</b><span>${esc(desc)}</span><span class="muted" style="font-size:11px;margin-top:4px">${esc(cmd)}</span></div>`).join('')}
+    </div>
+    <h2>Ambiente Kali (opcional)</h2>
+    <p class="muted">Para ferramentas que não vêm na imagem, rode um Kali isolado em contêiner:<br><code>distrobox create -i docker.io/kalilinux/kali-rolling -n kali</code><br><code>distrobox enter kali</code></p>`;
+  },
   perfis: () => {
     const p = S.profiles || {}, vpns = (S.privacy && S.privacy.vpns) || [], on = p.ativo === 'investigacao';
-    const tools = [['faro','Capix Faro','Ferramenta de investigação'],['keepass','Cofre de senhas','KeePassXC'],['descartavel','Navegador descartável','Não guarda nada e some ao fechar'],['tor','Tor Browser','Navegação anônima']];
+    const tools = [['faro','Capix Faro','Ferramenta de investigação'],['keepass','Cofre de senhas','KeePassXC'],['descartavel','Navegador descartável','Não guarda nada e some ao fechar'],['tor','Tor Browser','Navegação anônima']].filter(([id]) => featOn(id));
     return `<h1>Perfis de trabalho</h1>
     <p class="muted">Troque o ambiente inteiro com um clique: o modo investigação liga a VPN e abre suas ferramentas; o modo pessoal desfaz tudo.</p>
     <div class="hero" style="${on ? 'background:linear-gradient(120deg,#5a3418,#242427 70%)' : ''}"><div style="width:84px;height:84px;display:grid;place-items:center">${icon('profile')}</div>
@@ -427,7 +460,8 @@ const VIEWS = {
 };
 
 function render() {
-  $('#nav').innerHTML = PAGES.map(([id, label, ic]) => `<button class="navi ${id===page?'on':''}" data-go="${id}">${icon(ic)}${label}</button>`).join('');
+  if (!featOn(page) || !VIEWS[page]) page = 'inicio';
+  $('#nav').innerHTML = PAGES.filter(([id]) => featOn(id)).map(([id, label, ic]) => `<button class="navi ${id===page?'on':''}" data-go="${id}">${icon(ic)}${label}</button>`).join('');
   $('#main').innerHTML = VIEWS[page]();
 }
 

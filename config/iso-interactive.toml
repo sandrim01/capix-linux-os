@@ -23,4 +23,22 @@ timezone America/Sao_Paulo --utc
 # De propósito NÃO há "reboot"/"halt": ao terminar, o instalador espera você
 # clicar em "Reiniciar". Isso dá tempo de remover o pendrive antes do primeiro
 # boot — é o que impede o loop de reinstalação.
+
+# --- Correção de boot para BIOS Acer/Insyde (e similares) ---
+# Algumas BIOS só dão boot pelo caminho do "Windows Boot Manager" e ignoram (ou
+# apagam) a entrada do Linux, resultando em "No Bootable Device". Copiamos o
+# shim/grub para esse caminho para o sistema bootar sem intervenção manual.
+%post --nochroot
+for ROOT in /mnt/sysroot /mnt/sysimage; do
+  ESP="$ROOT/boot/efi"
+  if [ -d "$ESP/EFI/fedora" ]; then
+    mkdir -p "$ESP/EFI/Microsoft/Boot"
+    cp -f "$ESP/EFI/fedora/shimx64.efi" "$ESP/EFI/Microsoft/Boot/bootmgfw.efi" || true
+    cp -f "$ESP/EFI/fedora/grubx64.efi" "$ESP/EFI/Microsoft/Boot/grubx64.efi" || true
+    cp -f "$ESP/EFI/fedora/mmx64.efi"  "$ESP/EFI/Microsoft/Boot/" 2>/dev/null || true
+    break
+  fi
+done
+exit 0
+%end
 """
