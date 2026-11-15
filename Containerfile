@@ -74,6 +74,26 @@ RUN set -eux; \
               /usr/share/wayland-sessions/capix-gamer.desktop 2>/dev/null || true; \
     fi
 
+# 2b) Tela de login: deixa só duas opções de sessão —
+#     "Capix (sistema normal)" (Plasma Wayland) e "Capix Gamer" (modo console).
+#     Remove Plasma X11, kiosk e quaisquer outras sessões do seletor de login.
+RUN set -eux; \
+    for d in /usr/share/wayland-sessions /usr/share/xsessions; do \
+        [ -d "$d" ] || continue; \
+        for f in "$d"/*.desktop; do \
+            [ -e "$f" ] || continue; \
+            case "$(basename "$f")" in \
+                plasma.desktop|capix-gamer.desktop) : ;; \
+                *) rm -f "$f" ;; \
+            esac; \
+        done; \
+    done; \
+    # Renomeia a sessão Plasma para aparecer como "Capix (sistema normal)" no login
+    if [ -f /usr/share/wayland-sessions/plasma.desktop ]; then \
+        sed -i '/^Name\[/d' /usr/share/wayland-sessions/plasma.desktop; \
+        sed -i 's/^Name=.*/Name=Capix (sistema normal)/' /usr/share/wayland-sessions/plasma.desktop; \
+    fi
+
 # 3) Identidade, aparência e serviços
 RUN set -eux; \
     sed -i \
