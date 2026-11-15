@@ -134,8 +134,9 @@
           <button class="tab" data-os="nix">Linux / macOS</button>
         </div>
         <div class="codebox" data-os="win">
-          <button class="copy" data-copy="copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso">copiar</button>
-          <code>copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso</code>
+          <button class="copy" data-copy="cmd /c copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso">copiar</button>
+          <code>cmd /c copy /b capix-amd-intel.iso.part00.bin+capix-amd-intel.iso.part01.bin+capix-amd-intel.iso.part02.bin capix.iso</code>
+          <div style="margin-top:10px;color:var(--tx3);font-size:12.5px;font-family:var(--font)">Funciona no PowerShell e no Prompt de Comando. Abra a pasta das partes, segure Shift + clique direito → "Abrir no Terminal", e cole.</div>
         </div>
         <div class="codebox" data-os="nix" style="display:none">
           <button class="copy" data-copy="cat capix-amd-intel.iso.part*.bin > capix.iso">copiar</button>
