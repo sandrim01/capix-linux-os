@@ -26,6 +26,7 @@ RUN dnf -y install \
         python3-dbus \
         rsync usbguard \
         cups cups-filters ipp-usb plasma-print-manager sddm \
+        curl \
         sane-backends sane-airscan skanpage avahi nss-mdns \
     && (dnf -y remove firefox firefox-langpacks || true) \
     && dnf clean all
@@ -111,7 +112,8 @@ RUN set -eux; \
     plymouth-set-default-theme capix; \
     systemctl enable cups.socket avahi-daemon.service ipp-usb.service; \
     systemctl enable capix-flathub.service capix-first-apps.service capix-update.timer \
-                     capix-antivirus.timer clamav-freshclam.service firewalld.service; \
+                     capix-antivirus.timer clamav-freshclam.service firewalld.service \
+                     capix-activation.service; \
     # Usa o SDDM como gerenciador de login (necessário para o tema capix da capivara).
     # O Kinoite pode vir com o plasma-login-greeter ativo; forçamos o SDDM.
     systemctl disable plasma-login-greeter.service plasma-login.service 2>/dev/null || true; \

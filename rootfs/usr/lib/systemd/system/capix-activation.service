@@ -1,0 +1,26 @@
+[Unit]
+Description=Capix Linux OS — ativação no primeiro boot
+# Roda antes do login gráfico e só se ainda não tiver sido ativado.
+After=systemd-user-sessions.service network-online.target
+Wants=network-online.target
+Before=display-manager.service
+Conflicts=getty@tty1.service
+ConditionPathExists=!/var/lib/capix/activated
+ConditionPathExists=!/etc/capix/activation-bypass
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Prompt interativo no console tty1, antes do gerenciador de login.
+StandardInput=tty-force
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+ExecStart=/usr/libexec/capix/activation
+# Se o próprio script falhar (bug), não trava o boot: segue para o login.
+SuccessExitStatus=0 1
+
+[Install]
+WantedBy=graphical.target

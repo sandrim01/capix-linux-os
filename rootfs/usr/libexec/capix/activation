@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# Capix Linux OS — ativação no primeiro boot.
+# Libera o uso da máquina apenas para contas do Capix (site) que foram aprovadas.
+# Roda uma única vez: ao ativar, grava /var/lib/capix/activated e não pergunta mais.
+set -uo pipefail
+
+FLAG=/var/lib/capix/activated
+CONF=/etc/capix/activation.conf
+API="https://capix-linux-os-production.up.railway.app/api/verify"
+
+# Permite sobrescrever a URL da API por configuração.
+[ -r "$CONF" ] && . "$CONF" 2>/dev/null || true
+[ -n "${CAPIX_API_URL:-}" ] && API="$CAPIX_API_URL"
+
+# Já ativado, ou bypass de emergência/testes do dono: não bloqueia.
+[ -f "$FLAG" ] && exit 0
+[ -f /etc/capix/activation-bypass ] && exit 0
+
+mkdir -p "$(dirname "$FLAG")"
+
+clear 2>/dev/null || true
+cat <<'BANNER'
+
+      Capix Linux OS  —  Ativacao
+
+  Entre com a sua conta do Capix (a mesma do site)
+  para ativar este computador.
+  (precisa de internet uma vez)
+
+BANNER
+
+make_json() {
+  # Monta o JSON com escape correto (usa python3 se houver).
+  if command -v python3 >/dev/null 2>&1; then
+    EMAIL="$1" PASS="$2" python3 -c 'import json,os;print(json.dumps({"email":os.environ["EMAIL"],"password":os.environ["PASS"]}))'
+  else
+    local e p
+    e=${1//\\/\\\\}; e=${e//\"/\\\"}
+    p=${2//\\/\\\\}; p=${p//\"/\\\"}
+    printf '{"email":"%s","password":"%s"}' "$e" "$p"
+  fi
+}
+
+while true; do
+  printf "  E-mail: "
+  read -r EMAIL
+  printf "  Senha:  "
+  read -rs PASS; echo
+
+  BODY="$(make_json "$EMAIL" "$PASS")"
+  RESP="$(curl -sS --max-time 25 -H 'Content-Type: application/json' -d "$BODY" "$API" 2>/dev/null)"
+  rc=$?
+  unset PASS BODY
+
+  if [ $rc -ne 0 ] || [ -z "$RESP" ]; then
+    echo; echo "  [!] Sem conexao com o servidor de ativacao."
+    echo "      Verifique a internet e tente de novo."; echo
+    continue
+  fi
+
+  if printf '%s' "$RESP" | grep -q '"ok":true'; then
+    date -u +%FT%TZ > "$FLAG" 2>/dev/null || touch "$FLAG"
+    echo; echo "  [ok] Ativado com sucesso. Bem-vindo ao Capix!"; echo
+    sleep 2
+    exit 0
+  fi
+
+  if printf '%s' "$RESP" | grep -q 'aguardando'; then
+    echo; echo "  [x] Sua conta ainda esta aguardando aprovacao."
+  elif printf '%s' "$RESP" | grep -q 'nao liberado'; then
+    echo; echo "  [x] Acesso nao liberado para esta conta."
+  else
+    echo; echo "  [x] E-mail ou senha incorretos."
+  fi
+  echo "      Tente novamente."; echo
+done
