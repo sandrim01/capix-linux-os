@@ -237,10 +237,12 @@ function privacyPage({ controller, contact, version, date }) {
         <li>Senha, armazenada apenas de forma criptografada (hash bcrypt) — nunca em texto puro;</li>
         <li>Finalidade de uso (campo opcional que você pode preencher);</li>
         <li>Dados do aceite deste termo: data e hora, versão aceita, endereço IP e navegador (user-agent), para fins de comprovação do consentimento.</li>
+        <li>Data e hora da ativação, quando você usa sua conta para ativar uma instalação do Capix Linux OS.</li>
       </ul>
 
       <h2>3. Para que usamos</h2>
       <p>Usamos seus dados apenas para criar e gerenciar seu cadastro, analisar e aprovar seu pedido de acesso, e liberar o download do Capix. Não usamos seus dados para publicidade nem os vendemos.</p>
+      <p>Ao instalar o Capix Linux OS, sua conta é validada uma vez em nosso servidor para ativar aquela instalação (confirmando que o acesso foi aprovado). Nesse momento registramos apenas a data e hora da ativação; a validação é feita por conexão segura e sua senha não é armazenada no computador.</p>
 
       <h2>4. Base legal</h2>
       <p>O tratamento se baseia no seu <b>consentimento</b> (art. 7º, I, da LGPD) e, no que for necessário à segurança do serviço, no <b>legítimo interesse</b> (art. 7º, IX).</p>

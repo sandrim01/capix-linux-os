@@ -25,7 +25,7 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const adminConfigured = () => ADMIN_EMAIL && ADMIN_PASSWORD;
 
 // Política de privacidade / termo de consentimento (LGPD/GDPR).
-const TERMS_VERSION = process.env.TERMS_VERSION || "1.0";
+const TERMS_VERSION = process.env.TERMS_VERSION || "1.1";
 const TERMS_DATE = process.env.TERMS_DATE || "15/11/2026";
 const CONTROLLER_NAME = process.env.CONTROLLER_NAME || "UnbugSTI (UnbugSolutions-TI)";
 const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "contato@exemplo.com";
