@@ -57,6 +57,14 @@ td .mut{color:var(--tx3);font-size:13px}
 .pill.approved{background:rgba(107,179,63,.15);color:#bfe8a0}
 .pill.rejected{background:rgba(255,107,91,.12);color:#ffb3aa}
 .foot{text-align:center;color:var(--tx3);font-size:13px;padding:30px 0}
+.consent{display:flex;gap:10px;align-items:flex-start;margin-top:20px;font-size:13.5px;color:var(--tx2);line-height:1.5}
+.consent input{width:18px;height:18px;margin-top:2px;accent-color:var(--orange);flex:0 0 auto}
+.policy h2{font-size:18px;margin:26px 0 8px}
+.policy h1{margin-bottom:4px}
+.policy p,.policy li{color:var(--tx2);font-size:14.5px;margin-top:8px}
+.policy ul{margin:4px 0 4px 20px}
+.policy .meta{color:var(--tx3);font-size:13px;margin-bottom:18px}
+.policy code{background:var(--bg2);padding:2px 6px;border-radius:6px;font-size:13px}
 `;
 
 function layout(title, body, { wide = false } = {}) {
@@ -91,6 +99,10 @@ function registerPage({ error = "", values = {} } = {}) {
         <input name="password" type="password" minlength="8" maxlength="200" required>
         <label>Para que vai usar? <span style="color:var(--tx3);font-weight:400">(opcional)</span></label>
         <textarea name="note" maxlength="500" placeholder="Ex.: testar em um notebook antigo"></textarea>
+        <label class="consent">
+          <input type="checkbox" name="consent" value="on" required>
+          <span>Li e concordo com a <a href="/privacidade" target="_blank" rel="noopener">Política de Privacidade e o Termo de Consentimento</a>, e autorizo o tratamento dos meus dados para as finalidades ali descritas, nos termos da LGPD.</span>
+        </label>
         <button class="btn btn-primary" type="submit">Criar conta</button>
       </form>
       <p class="alt">Já tem conta? <a href="/login">Entrar</a></p>
@@ -174,8 +186,15 @@ function userRow(u, showActions) {
         <form method="post" action="/admin/approve"><input type="hidden" name="id" value="${u.id}"><button class="btn btn-ok btn-sm" type="submit">Aprovar</button></form>
         <form method="post" action="/admin/reject"><input type="hidden" name="id" value="${u.id}"><button class="btn btn-no btn-sm" type="submit">Recusar</button></form>
       </div></td>` : `<td><span class="pill ${u.status}">${u.status === "approved" ? "aprovado" : u.status === "rejected" ? "recusado" : "pendente"}</span></td>`;
+  let consent = "";
+  if (u.terms_version) {
+    const at = u.terms_accepted_at ? new Date(u.terms_accepted_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "—";
+    consent = `<br><span class="mut" style="color:#8fb86a">✔ consentimento ${esc(u.terms_version)} · ${esc(at)}${u.consent_ip ? " · IP " + esc(u.consent_ip) : ""}</span>`;
+  } else {
+    consent = `<br><span class="mut" style="color:#caa">sem registro de consentimento</span>`;
+  }
   return `<tr>
-    <td><span class="em">${esc(u.name || "—")}</span><br><span class="mut">${esc(u.email)}</span>${u.note ? `<br><span class="mut">“${esc(u.note)}”</span>` : ""}</td>
+    <td><span class="em">${esc(u.name || "—")}</span><br><span class="mut">${esc(u.email)}</span>${u.note ? `<br><span class="mut">“${esc(u.note)}”</span>` : ""}${consent}</td>
     <td class="mut">${esc(when)}</td>
     ${actions}
   </tr>`;
@@ -201,7 +220,54 @@ function adminPage({ pending, approved, rejected }) {
   `, { wide: true });
 }
 
+function privacyPage({ controller, contact, version, date }) {
+  return layout("Política de Privacidade", `
+    <div class="card policy">
+      <h1>Política de Privacidade e Termo de Consentimento</h1>
+      <p class="meta">Versão ${esc(version)} · atualizada em ${esc(date)}</p>
+
+      <p>Esta Política explica como o <b>${esc(controller)}</b> (“nós”), responsável pelo <b>Capix Linux OS</b>, trata os dados pessoais de quem se cadastra para acessar a área de download, em conformidade com a <b>Lei Geral de Proteção de Dados</b> (Lei nº 13.709/2018 — LGPD) e alinhado ao <b>GDPR</b> (Regulamento (UE) 2016/679).</p>
+
+      <h2>1. Controlador e contato</h2>
+      <p>Controlador dos dados: <b>${esc(controller)}</b>. Para dúvidas ou para exercer seus direitos, fale com o encarregado pelo tratamento de dados (DPO) em <code>${esc(contact)}</code>.</p>
+
+      <h2>2. Dados que coletamos</h2>
+      <ul>
+        <li>Nome e e-mail que você informa no cadastro;</li>
+        <li>Senha, armazenada apenas de forma criptografada (hash bcrypt) — nunca em texto puro;</li>
+        <li>Finalidade de uso (campo opcional que você pode preencher);</li>
+        <li>Dados do aceite deste termo: data e hora, versão aceita, endereço IP e navegador (user-agent), para fins de comprovação do consentimento.</li>
+      </ul>
+
+      <h2>3. Para que usamos</h2>
+      <p>Usamos seus dados apenas para criar e gerenciar seu cadastro, analisar e aprovar seu pedido de acesso, e liberar o download do Capix. Não usamos seus dados para publicidade nem os vendemos.</p>
+
+      <h2>4. Base legal</h2>
+      <p>O tratamento se baseia no seu <b>consentimento</b> (art. 7º, I, da LGPD) e, no que for necessário à segurança do serviço, no <b>legítimo interesse</b> (art. 7º, IX).</p>
+
+      <h2>5. Compartilhamento</h2>
+      <p>Não compartilhamos seus dados com terceiros para fins próprios deles. Utilizamos provedores de infraestrutura e hospedagem que processam os dados em nosso nome e seguindo nossas instruções.</p>
+
+      <h2>6. Segurança e retenção</h2>
+      <p>Adotamos medidas técnicas para proteger seus dados (senhas com hash, acesso restrito ao painel administrativo). Mantemos seus dados enquanto sua conta existir ou enquanto durar a finalidade; depois disso, eles são eliminados ou anonimizados.</p>
+
+      <h2>7. Seus direitos</h2>
+      <p>A qualquer momento você pode solicitar: confirmação e acesso aos seus dados, correção, anonimização ou eliminação, portabilidade, informação sobre compartilhamentos e <b>revogação do consentimento</b> (art. 18 da LGPD; direitos equivalentes no GDPR). Basta escrever para <code>${esc(contact)}</code>.</p>
+
+      <h2>8. Transferência internacional</h2>
+      <p>Caso os dados sejam processados fora do seu país (por provedores de hospedagem), adotamos salvaguardas compatíveis com a LGPD e o GDPR.</p>
+
+      <h2>9. Alterações</h2>
+      <p>Podemos atualizar esta Política. A versão vigente é identificada pelo número e pela data no topo desta página.</p>
+
+      <h2>10. Consentimento</h2>
+      <p>Ao marcar a caixa de aceite e concluir o cadastro, você declara ter lido e concordado com esta Política e autoriza o tratamento dos seus dados para as finalidades aqui descritas. Registramos a versão, a data/hora, o IP e o navegador do seu aceite como prova do consentimento.</p>
+
+      <p style="margin-top:26px"><a href="/cadastro">← Voltar ao cadastro</a></p>
+    </div>`, { wide: true });
+}
+
 module.exports = {
   esc, layout, registerPage, loginPage, pendingPage, rejectedPage,
-  unavailablePage, adminLoginPage, adminDisabledPage, adminPage,
+  unavailablePage, adminLoginPage, adminDisabledPage, adminPage, privacyPage,
 };

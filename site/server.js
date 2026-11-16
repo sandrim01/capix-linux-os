@@ -24,6 +24,12 @@ const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const adminConfigured = () => ADMIN_EMAIL && ADMIN_PASSWORD;
 
+// Política de privacidade / termo de consentimento (LGPD/GDPR).
+const TERMS_VERSION = process.env.TERMS_VERSION || "1.0";
+const TERMS_DATE = process.env.TERMS_DATE || "15/11/2026";
+const CONTROLLER_NAME = process.env.CONTROLLER_NAME || "UnbugSTI (UnbugSolutions-TI)";
+const CONTACT_EMAIL = process.env.CONTACT_EMAIL || "contato@exemplo.com";
+
 const COOKIE = {
   httpOnly: true,
   sameSite: "strict",
@@ -87,14 +93,22 @@ app.post("/cadastro", limiter, sameOrigin, async (req, res) => {
   const email = (req.body.email || "").trim().toLowerCase();
   const password = req.body.password || "";
   const note = (req.body.note || "").trim();
+  const consent = req.body.consent === "on";
   const values = { name, email };
   if (!name || !emailRe.test(email) || password.length < 8)
     return res.status(400).send(P.registerPage({ error: "Confira os campos: nome, e-mail válido e senha de 8+ caracteres.", values }));
+  if (!consent)
+    return res.status(400).send(P.registerPage({ error: "Para criar a conta, é preciso ler e aceitar a Política de Privacidade.", values }));
   try {
     if (await db.getUserByEmail(email))
       return res.status(409).send(P.registerPage({ error: "Já existe uma conta com esse e-mail. Faça login.", values }));
     const hash = await bcrypt.hash(password, 12);
-    const user = await db.createUser({ email, name, note, hash });
+    const ip = ((req.headers["x-forwarded-for"] || "").split(",")[0].trim()) || req.ip || "";
+    const ua = (req.get("user-agent") || "").slice(0, 400);
+    const user = await db.createUser({
+      email, name, note, hash,
+      termsVersion: TERMS_VERSION, consentIp: ip, consentUserAgent: ua,
+    });
     mailer.notifyNewSignup({ ...user, note }).catch(() => {});
     res.cookie("capix_user", signUser(user.id), COOKIE);
     res.send(P.pendingPage(user));
@@ -102,6 +116,14 @@ app.post("/cadastro", limiter, sameOrigin, async (req, res) => {
     console.error("[capix] erro no cadastro:", e.message);
     res.status(500).send(P.registerPage({ error: "Erro ao criar a conta. Tente novamente.", values }));
   }
+});
+
+// ---------- Política de privacidade ----------
+app.get(["/privacidade", "/termos"], (req, res) => {
+  res.send(P.privacyPage({
+    controller: CONTROLLER_NAME, contact: CONTACT_EMAIL,
+    version: TERMS_VERSION, date: TERMS_DATE,
+  }));
 });
 
 // ---------- Login ----------

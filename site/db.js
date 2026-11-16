@@ -35,15 +35,20 @@ async function init() {
       decided_at    TIMESTAMPTZ
     );
   `);
+  // Registro de consentimento (LGPD/GDPR): guarda a prova do aceite.
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_ip TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_user_agent TEXT`);
   console.log("[capix] banco pronto.");
 }
 
-async function createUser({ email, name, note, hash }) {
+async function createUser({ email, name, note, hash, termsVersion, consentIp, consentUserAgent }) {
   const r = await pool.query(
-    `INSERT INTO users (email, name, note, password_hash)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO users (email, name, note, password_hash, terms_version, terms_accepted_at, consent_ip, consent_user_agent)
+     VALUES ($1, $2, $3, $4, $5, now(), $6, $7)
      RETURNING id, email, name, status, created_at`,
-    [email, name, note, hash]
+    [email, name, note, hash, termsVersion || null, consentIp || null, consentUserAgent || null]
   );
   return r.rows[0];
 }
@@ -60,7 +65,8 @@ async function getUserById(id) {
 
 async function listByStatus(status) {
   const r = await pool.query(
-    `SELECT id, email, name, note, status, created_at, decided_at
+    `SELECT id, email, name, note, status, created_at, decided_at,
+            terms_version, terms_accepted_at, consent_ip
      FROM users WHERE status = $1 ORDER BY created_at DESC`,
     [status]
   );
