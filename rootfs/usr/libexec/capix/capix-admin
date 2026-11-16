@@ -18,7 +18,7 @@ Só aceita verbos e argumentos de uma lista fechada; nada vindo da interface vir
   capix-admin vpn-up|vpn-down <nome da VPN>
   capix-admin usbguard on|off
 """
-import os, re, subprocess, sys, pwd, shutil
+import os, re, subprocess, sys, pwd, shutil, time
 
 DRY = os.environ.get("CAPIX_DRYRUN") == "1"
 APPS_LIST = "/usr/share/capix/apps.list"
@@ -97,7 +97,26 @@ def main(argv):
     elif verb == "android-init":
         if args not in (["GAPPS"], ["VANILLA"]):
             die("use GAPPS|VANILLA")
-        run("/usr/bin/waydroid", "init", "-f", "-s", args[0])
+        # URLs oficiais das imagens do Waydroid. Esta versão não traz os padrões,
+        # então passamos explicitamente (senão falha com "provide OTA URLs").
+        SYS_OTA = "https://ota.waydro.id/system"
+        VEN_OTA = "https://ota.waydro.id/vendor"
+        # A imagem do Android é grande (~1 GB); em redes instáveis (VPN/proxy) o
+        # download pode cair ("connection reset"). Tenta algumas vezes antes de desistir.
+        ok = False
+        for tentativa in range(1, 5):
+            print(f"# baixando imagem do Android (tentativa {tentativa}/4)...", flush=True)
+            rc = run("/usr/bin/waydroid", "init", "-f", "-s", args[0],
+                     "-c", SYS_OTA, "-v", VEN_OTA, check=False)
+            if rc == 0:
+                ok = True
+                break
+            print(f"# tentativa falhou (rc={rc}); repetindo em 5s...", flush=True)
+            if not DRY:
+                time.sleep(5)
+        if not ok:
+            die("não foi possível baixar a imagem do Android (rede instável?). "
+                "Tente de novo — o download continua de onde parou.")
         run("/usr/bin/systemctl", "enable", "--now", "waydroid-container.service")
 
     elif verb == "android-remove":
