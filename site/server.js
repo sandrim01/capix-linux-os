@@ -41,6 +41,7 @@ const COOKIE = {
 app.set("trust proxy", 1);
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false, limit: "32kb" }));
+app.use(express.json({ limit: "8kb" }));
 
 // Cabeçalhos de segurança básicos.
 app.use((req, res, next) => {
@@ -219,6 +220,33 @@ async function decide(req, res, status) {
 }
 app.post("/admin/approve", requireAdmin, sameOrigin, (req, res) => decide(req, res, "approved"));
 app.post("/admin/reject", requireAdmin, sameOrigin, (req, res) => decide(req, res, "rejected"));
+
+// ---------- API de ativação (consumida pelo Capix OS na instalação) ----------
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false });
+
+app.post("/api/verify", apiLimiter, async (req, res) => {
+  if (!db.hasDb()) return res.status(503).json({ ok: false, reason: "servico indisponivel" });
+  const email = (req.body.email || "").trim().toLowerCase();
+  const password = req.body.password || "";
+  if (!emailRe.test(email) || !password)
+    return res.status(400).json({ ok: false, reason: "dados invalidos" });
+  try {
+    const user = await db.getUserByEmail(email);
+    if (!user || !(await bcrypt.compare(password, user.password_hash)))
+      return res.status(401).json({ ok: false, reason: "credenciais invalidas" });
+    if (user.status !== "approved")
+      return res.status(403).json({
+        ok: false,
+        reason: user.status === "pending" ? "aguardando aprovacao" : "acesso nao liberado",
+        status: user.status,
+      });
+    db.touchActivation(user.id).catch(() => {});
+    return res.json({ ok: true, name: user.name || "", email: user.email });
+  } catch (e) {
+    console.error("[capix] erro no /api/verify:", e.message);
+    return res.status(500).json({ ok: false, reason: "erro interno" });
+  }
+});
 
 // ---------- Site estático (público) ----------
 app.use(express.static(path.join(__dirname, "public"), {

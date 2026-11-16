@@ -40,6 +40,7 @@ async function init() {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_ip TEXT`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS consent_user_agent TEXT`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_activation_at TIMESTAMPTZ`);
   console.log("[capix] banco pronto.");
 }
 
@@ -82,7 +83,11 @@ async function setStatus(id, status) {
   await pool.query(`UPDATE users SET status = $1, decided_at = now() WHERE id = $2`, [status, id]);
 }
 
+async function touchActivation(id) {
+  await pool.query(`UPDATE users SET last_activation_at = now() WHERE id = $1`, [id]);
+}
+
 module.exports = {
   hasDb, init, createUser, getUserByEmail, getUserById,
-  listByStatus, countPending, setStatus,
+  listByStatus, countPending, setStatus, touchActivation,
 };
