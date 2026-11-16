@@ -74,7 +74,7 @@ function layout(title, body, { wide = false } = {}) {
 <link rel="icon" type="image/png" href="/assets/logo.png">
 <style>${CSS}</style></head><body>
 <div class="top">
-  <a class="brand" href="/"><img src="/assets/logo.png" alt="Capix">Capix<span class="accent">OS</span></a>
+  <a class="brand" href="/"><img src="/assets/logo.png" alt="Capix">Capix<span class="accent">OS</span><span style="font-size:11px;font-weight:700;color:var(--orange-soft);border:1px solid rgba(246,139,44,.45);padding:2px 8px;border-radius:999px;margin-left:8px;letter-spacing:.04em">BETA</span></a>
   <a href="/" style="color:var(--tx3);font-size:14px">← Voltar ao site</a>
 </div>
 <div class="wrap ${wide ? "wide" : ""}">${body}</div>
