@@ -1,3 +1,6 @@
+node_modules
+npm-debug.log
+.git
+Caddyfile
+public/preview.html
 README.md
-railway.json
-.dockerignore

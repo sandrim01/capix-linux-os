@@ -1,35 +1,50 @@
-# Site de apresentação do Capix Linux OS
+# Site do Capix Linux OS
 
-Site estático (uma página) com a identidade visual do Capix e os links de download.
-Servido pelo **Caddy** dentro de um container — pronto para o **Railway**.
+Site de apresentação com **cadastro, login e aprovação de acesso** à área de download.
+Node/Express + PostgreSQL, pronto para o Railway (Docker).
 
-## Arquivos
-- `index.html` — a página.
-- `preview.html` — prévia interativa do sistema (boot → login → área de trabalho).
-- `assets/` — logo, fundo e miniaturas.
-- `Dockerfile` + `Caddyfile` — servidor estático (lê a porta de `$PORT`).
-- `railway.json` — configuração do Railway (builder = Dockerfile).
+## Como funciona
 
-## Publicar no Railway (passo a passo)
-1. Em [railway.com](https://railway.com) → **New Project** → **Deploy from GitHub repo** → escolha `sandrim01/capix-linux-os`.
-2. Abra o serviço criado → aba **Settings**:
-   - **Root Directory**: `site`  ← importante, o site está nesta subpasta.
-   - **Build**: o Railway detecta o `Dockerfile` automaticamente.
-3. Aba **Settings → Networking** → **Generate Domain** (ou aponte um domínio seu).
-4. Pronto: cada `git push` na `main` redeploya o site.
+1. Visitante clica em **Baixar** → vai para **/login** (ou **/cadastro**).
+2. Ao se cadastrar, a conta fica **pendente**.
+3. O dono entra em **/admin**, vê os cadastros pendentes e **aprova** ou **recusa**.
+4. Só depois de aprovado o usuário vê a **página de download** (`/download`).
 
-Não é preciso configurar porta: o Caddy usa a variável `$PORT` que o Railway injeta.
+## Variáveis de ambiente (no Railway)
 
-## Testar localmente
-```bash
-# com Docker/Podman
-docker build -t capix-site . && docker run --rm -p 8080:8080 -e PORT=8080 capix-site
-# ou sem Docker
-python3 -m http.server 8080   # e abra http://localhost:8080
+Obrigatórias para o login funcionar:
+
+| Variável | Para quê |
+|---|---|
+| `DATABASE_URL` | Banco PostgreSQL. **Adicione um Postgres no projeto** que o Railway injeta esta variável automaticamente. |
+| `ADMIN_EMAIL` | E-mail do admin (login do painel `/admin`). |
+| `ADMIN_PASSWORD` | Senha do admin. |
+| `JWT_SECRET` | Segredo das sessões. Use um texto longo e aleatório. Sem ele, as sessões caem a cada reinício. |
+
+Opcionais (notificação por e-mail de novos cadastros):
+
+| Variável | Para quê |
+|---|---|
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Servidor de e-mail. Se definidos, o admin recebe um e-mail a cada novo cadastro. |
+| `PUBLIC_URL` | URL pública do site (usada no link do e-mail). |
+
+Sem `DATABASE_URL` o site continua no ar em "modo vitrine" (páginas públicas funcionam; login mostra aviso).
+
+## Rodar local
+
+```
+npm install
+DATABASE_URL=postgres://... ADMIN_EMAIL=voce@exemplo.com ADMIN_PASSWORD=senha \
+  JWT_SECRET=algo-aleatorio COOKIE_INSECURE=1 npm start
 ```
 
-## Downloads
-- **Imagem do sistema** (pública e permanente): `ghcr.io/sandrim01/capix:44` e `ghcr.io/sandrim01/capix-nvidia:44`.
-- **ISO (~5 GB)**: hoje fica nos artefatos do GitHub Actions. Para um link direto e definitivo,
-  publique a ISO no Internet Archive ou num bucket (Cloudflare R2) e troque as URLs dos botões
-  `#dl-iso-amd` / `#dl-iso-nvidia` no `index.html`.
+(`COOKIE_INSECURE=1` só no local, porque não há HTTPS.)
+
+## Estrutura
+
+- `server.js` — rotas (público, login/cadastro, download protegido, admin)
+- `db.js` — PostgreSQL (tabela `users`)
+- `pages.js` — páginas de login/cadastro/aguardando/admin (identidade do site)
+- `mailer.js` — e-mail opcional
+- `public/` — site público (landing, assets)
+- `protected/download.html` — página de download (só aprovados)
