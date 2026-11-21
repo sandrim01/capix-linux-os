@@ -121,6 +121,11 @@ RUN set -eux; \
         systemctl enable sddm.service 2>/dev/null || true; \
         ln -sf /usr/lib/systemd/system/sddm.service /etc/systemd/system/display-manager.service; \
     fi; \
+    # Tela de bloqueio (kscreenlocker): reaproveita a capivara e os assets do SDDM (sem symlinks, exigência do Plasma 6)
+    mkdir -p /usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen; \
+    cp /usr/share/sddm/themes/capix/Capybara.qml /usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/Capybara.qml; \
+    rm -rf /usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/assets; \
+    cp -r /usr/share/sddm/themes/capix/assets /usr/share/plasma/shells/org.kde.plasma.desktop/contents/lockscreen/assets; \
     # ClamAV: permite rodar a atualização de definições (o Fedora vem com "Example" no arquivo)
     sed -i 's/^Example/#Example/' /etc/freshclam.conf 2>/dev/null || true; \
     chmod 0755 /usr/libexec/capix/* /usr/bin/capix-*; \
