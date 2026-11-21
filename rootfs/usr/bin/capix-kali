@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Abre o terminal Kali (distrobox) em uma janela do Konsole.
+set -euo pipefail
+if command -v konsole >/dev/null 2>&1; then
+  exec konsole --title "Kali Linux — Capix Ciber" -e /usr/libexec/capix/capix-pentest
+else
+  exec /usr/libexec/capix/capix-pentest
+fi

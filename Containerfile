@@ -31,20 +31,17 @@ RUN dnf -y install \
     && (dnf -y remove firefox firefox-langpacks || true) \
     && dnf clean all
 
-# 1a) Pacotes específicos da edição
-#   - desktop: modo gamer (GameMode/Gamescope/MangoHud)
-#   - sec: ferramentas de OSINT/pentest + utilitários de rede
+# 1a) Modos embarcados (todos os 3 modos juntos na imagem: Normal + Gamer + Ciber/VMs)
 RUN set -eux; \
-    if [ "$CAPIX_EDITION" = "desktop" ]; then \
-        dnf -y install gamemode gamescope mangohud bind-utils; \
-    elif [ "$CAPIX_EDITION" = "sec" ]; then \
-        dnf -y install --skip-unavailable \
-            nmap nmap-ncat tcpdump wireshark-cli whois bind-utils \
-            perl-Image-ExifTool masscan \
-            john hydra hashcat sqlmap nikto aircrack-ng \
-            radare2 binwalk foremost openssl \
-            git python3-pip jq; \
-    fi; \
+    dnf -y install --skip-unavailable \
+        gamemode gamescope mangohud bind-utils \
+        nmap nmap-ncat tcpdump wireshark wireshark-cli whois \
+        perl-Image-ExifTool masscan \
+        john hydra hashcat sqlmap nikto aircrack-ng \
+        radare2 binwalk foremost yara openssl \
+        git python3-pip jq podman \
+        qemu-kvm libvirt-daemon-kvm libvirt-daemon-config-network \
+        virt-manager virt-viewer edk2-ovmf swtpm; \
     dnf clean all
 
 # 1b) Placas de vídeo AMD e Intel: drivers open source (Mesa), Vulkan 64 e 32 bits
@@ -61,30 +58,20 @@ RUN dnf -y install \
 # 2) Arquivos do Capix (tema de login, splash, layout Win10, wallpapers, serviços)
 COPY rootfs/ /
 
-# 2a) Aplica a edição: grava o marcador e remove o que não pertence a ela
+# 2a) Grava o marcador da edição (mantém os 3 modos juntos: Normal, Gamer e Ciber)
 RUN set -eux; \
-    mkdir -p /usr/share/capix; printf '%s\n' "${CAPIX_EDITION}" > /usr/share/capix/edition; \
-    if [ "$CAPIX_EDITION" = "desktop" ]; then \
-        rm -f /usr/libexec/capix/faro-server.py /usr/bin/capix-faro \
-              /usr/libexec/capix/capix-pentest \
-              /usr/share/applications/capix-faro.desktop; \
-        rm -rf /usr/share/capix/faro; \
-    fi; \
-    if [ "$CAPIX_EDITION" = "sec" ]; then \
-        rm -f /usr/libexec/capix/gamer-session /usr/libexec/capix/gamer-dnd \
-              /usr/share/wayland-sessions/capix-gamer.desktop 2>/dev/null || true; \
-    fi
+    mkdir -p /usr/share/capix; printf '%s\n' "${CAPIX_EDITION}" > /usr/share/capix/edition
 
-# 2b) Tela de login: deixa só duas opções de sessão —
-#     "Capix (sistema normal)" (Plasma Wayland) e "Capix Gamer" (modo console).
-#     Remove Plasma X11, kiosk e quaisquer outras sessões do seletor de login.
+# 2b) Tela de login: deixa só três opções visíveis de sessão —
+#     "Capix (sistema normal)", "Capix Gamer (modo console)" e "Capix Ciber (lab de cibersegurança)".
+#     Mantém capix-kiosk.desktop (NoDisplay=true) para o modo quiosque funcionar via autologin.
 RUN set -eux; \
     for d in /usr/share/wayland-sessions /usr/share/xsessions; do \
         [ -d "$d" ] || continue; \
         for f in "$d"/*.desktop; do \
             [ -e "$f" ] || continue; \
             case "$(basename "$f")" in \
-                plasma.desktop|capix-gamer.desktop) : ;; \
+                plasma.desktop|capix-gamer.desktop|capix-ciber.desktop|capix-kiosk.desktop) : ;; \
                 *) rm -f "$f" ;; \
             esac; \
         done; \
@@ -111,6 +98,7 @@ RUN set -eux; \
     gtk-update-icon-cache -f /usr/share/icons/hicolor || true; \
     plymouth-set-default-theme capix; \
     systemctl enable cups.socket avahi-daemon.service ipp-usb.service; \
+    systemctl enable virtqemud.socket virtnetworkd.socket virtstoraged.socket 2>/dev/null || true; \
     systemctl enable capix-flathub.service capix-first-apps.service capix-update.timer \
                      capix-antivirus.timer clamav-freshclam.service firewalld.service \
                      capix-activation.service; \

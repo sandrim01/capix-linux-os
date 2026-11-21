@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Navegador de Testes (Proxy Burp/ZAP)
+Comment=Chromium com perfil isolado pronto para proxy local em 127.0.0.1:8080
+Exec=capix-ciber-browser --proxy
+Icon=chromium-browser
+Terminal=false
+Categories=Network;Security;Education;

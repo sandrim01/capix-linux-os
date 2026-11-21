@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Prepara a estrutura de estudos ~/CiberLab (idempotente — não sobrescreve arquivos do usuário).
+set -euo pipefail
+BASE="$HOME/CiberLab"
+mkdir -p "$BASE/aulas" "$BASE/relatorios" "$BASE/pcaps" "$BASE/wordlists" "$BASE/vms"
+
+TPL="$BASE/relatorios/MODELO-RELATORIO.md"
+if [ ! -f "$TPL" ]; then
+  cat > "$TPL" <<'EOF'
+# Relatório de Laboratório / Estudo — Cibersegurança
+
+- **Data:** YYYY-MM-DD
+- **Disciplina / Módulo:**
+- **Ambiente / Alvo autorizado:** (ex.: OWASP Juice Shop local / VM de laboratório)
+- **Responsável:**
+
+## 1. Objetivo e Escopo
+Descreva o escopo autorizado do laboratório e o que será testado.
+
+## 2. Reconhecimento e Enumeração
+- Ferramentas usadas: `nmap`, `whois`, `Capix Faro`, `tshark`
+- Achados iniciais:
+
+## 3. Análise e Vulnerabilidades Identificadas
+### Achado 1 — [Título]
+- **Severidade:** Baixa / Média / Alta / Crítica
+- **Descrição:**
+- **Evidência / Reprodução:**
+- **Impacto:**
+- **Mitigação recomendada:**
+
+## 4. Conclusões e Aprendizados
+Resumo técnico do que foi aprendido nesta aula/prática.
+EOF
+fi
+echo "Pasta de estudos pronta em $BASE"

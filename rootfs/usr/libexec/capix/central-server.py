@@ -178,6 +178,7 @@ def status():
     st["printers"] = printers_status()
     st["profiles"] = profiles_status()
     st["privacy"] = privacy_status()
+    st["ciber"] = ciber_status()
     st["user"] = os.environ.get("USER", "")
     st["welcome_done"] = os.path.exists(WELCOME_FLAG)
     ed = "desktop"
@@ -190,7 +191,7 @@ def status():
     st["features"] = {
         "faro": os.path.exists("/usr/bin/capix-faro"),
         "gamer": os.path.exists("/usr/libexec/capix/gamer-session"),
-        "pentest": ed == "sec",
+        "pentest": os.path.exists("/usr/libexec/capix/ciber-lab") or ed == "sec",
         "ia": False,
     }
     return st
@@ -234,6 +235,14 @@ def profiles_status():
 def backup_status():
     try:
         out = sh("/usr/libexec/capix/capix-backup", "status", timeout=10)
+        return json.loads(out) if out else {}
+    except Exception:
+        return {}
+
+
+def ciber_status():
+    try:
+        out = sh("/usr/libexec/capix/ciber-lab", "status", timeout=10)
         return json.loads(out) if out else {}
     except Exception:
         return {}
@@ -292,6 +301,18 @@ def mock_status():
         "privacy": {"vpns": [{"nome": "Trabalho (WireGuard)", "ativa": False}, {"nome": "Casa", "ativa": True}],
                     "usbguard": {"disponivel": True, "ativo": False}, "firewall": True,
                     "cofre_instalado": False, "tor_instalado": False},
+        "ciber": {
+            "session_ciber": False, "ciber_session_installed": True,
+            "workspace": os.path.join(HOME, "CiberLab"), "workspace_exists": True,
+            "kali_created": False, "kvm": True, "virt_manager": True, "wireshark": True, "podman": True,
+            "labs": [
+                {"id": "juiceshop", "name": "OWASP Juice Shop", "desc": "Aplicação web moderna intencionalmente vulnerável (OWASP Top 10, APIs, XSS, SQLi)", "url": "http://127.0.0.1:3000", "running": False},
+                {"id": "dvwa", "name": "DVWA (Damn Vulnerable Web App)", "desc": "Laboratório clássico em PHP/MySQL com níveis ajustáveis (Low/Medium/High)", "url": "http://127.0.0.1:8081", "running": False},
+                {"id": "webgoat", "name": "OWASP WebGoat", "desc": "Lições guiadas passo a passo de AppSec e segurança web", "url": "http://127.0.0.1:8082/WebGoat", "running": False},
+                {"id": "cyberchef", "name": "CyberChef (offline)", "desc": "Canivete suíço para encoding, criptografia, hashes, regex e análise de payloads", "url": "http://127.0.0.1:8083", "running": False},
+            ],
+        },
+        "features": {"faro": True, "gamer": True, "pentest": True, "ia": False},
         "user": os.environ.get("USER", "capix"),
         "welcome_done": os.path.exists(WELCOME_FLAG),
     }
@@ -320,6 +341,18 @@ OPENERS = {
     "printers": ["systemsettings", "kcm_printer_manager"],
     "scan": ["skanpage"],
     "descartavel": ["capix-navegador-descartavel"],
+    "kali": ["capix-kali"],
+    "virt-manager": ["virt-manager"],
+    "wireshark": ["wireshark"],
+    "ciber-browser": ["capix-ciber-browser"],
+    "ciber-proxy": ["capix-ciber-browser", "--proxy"],
+    "ciber-dir": ["dolphin", os.path.join(HOME, "CiberLab")],
+}
+CIBER_LAB_URLS = {
+    "juiceshop": "http://127.0.0.1:3000",
+    "dvwa": "http://127.0.0.1:8081",
+    "webgoat": "http://127.0.0.1:8082/WebGoat",
+    "cyberchef": "http://127.0.0.1:8083",
 }
 PROFILES_CFG = os.path.join(HOME, ".config/capix/profiles.json")
 PROFILE_FLAG = os.path.join(HOME, ".config/capix/profile-active")
@@ -406,6 +439,20 @@ def user_action(name, args):
         return [], False
     if name == "shred-file":
         return [["/usr/libexec/capix/shred-file"]], False
+    # --- Lab Ciber (tudo nível de usuário / Podman rootless) ---
+    if name == "ciber-init":
+        return [["/usr/libexec/capix/ciber-init-workspace"]], False
+    if name in ("ciber-lab-start", "ciber-lab-stop"):
+        if len(args) != 1 or args[0] not in CIBER_LAB_URLS:
+            raise ValueError("laboratório desconhecido")
+        sub = "start" if name == "ciber-lab-start" else "stop"
+        return [["/usr/libexec/capix/ciber-lab", sub, args[0]]], False
+    if name == "ciber-lab-stop-all":
+        return [["/usr/libexec/capix/ciber-lab", "stop-all"]], False
+    if name == "ciber-lab-open":
+        if len(args) != 1 or args[0] not in CIBER_LAB_URLS:
+            raise ValueError("laboratório desconhecido")
+        return [["capix-ciber-browser", CIBER_LAB_URLS[args[0]]]], True
     raise ValueError("ação desconhecida")
 
 

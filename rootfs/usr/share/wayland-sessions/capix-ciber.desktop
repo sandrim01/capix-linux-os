@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Capix Ciber (lab de cibersegurança)
+Comment=Ambiente dedicado para aulas e laboratórios de cibersegurança: Kali, alvos isolados, Faro e VMs
+Exec=/usr/libexec/capix/ciber-session

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Terminal Kali (Capix Ciber)
+Comment=Abre o contêiner Kali Linux isolado para estudos e laboratórios de cibersegurança
+Exec=capix-kali
+Icon=utilities-terminal
+Terminal=false
+Categories=System;Security;Education;

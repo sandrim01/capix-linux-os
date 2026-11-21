@@ -1,0 +1,7 @@
+// Permite que usuários administradores (grupo wheel) gerenciem VMs locais no virt-manager/libvirt
+// sem precisar configurar grupos manualmente no sistema imutável.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.libvirt.unix.manage" && subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});

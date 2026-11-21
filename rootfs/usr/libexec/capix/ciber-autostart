@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Autostart condicional: só executa quando o usuário escolheu a sessão "Capix Ciber" no login.
+[ "${CAPIX_SESSION:-}" = "ciber" ] || exit 0
+/usr/libexec/capix/ciber-init-workspace 2>/dev/null || true
+sleep 2
+exec /usr/bin/capix-central --page pentest

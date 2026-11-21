@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Capix Linux OS — sessão "Capix Ciber" (3º modo de login: estudos e laboratórios de cibersegurança).
+# Inicia o Plasma Wayland com a flag de sessão Ciber ativa e prepara a pasta ~/CiberLab.
+export CAPIX_SESSION=ciber
+mkdir -p "$HOME/.config/capix"
+touch "$HOME/.config/capix/ciber-on"
+trap 'rm -f "$HOME/.config/capix/ciber-on"' EXIT
+/usr/libexec/capix/ciber-init-workspace 2>/dev/null || true
+exec /usr/bin/startplasma-wayland

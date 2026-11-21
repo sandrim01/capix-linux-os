@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Capix Ciber — navegador dedicado para aulas e testes de segurança web.
+# Usa um perfil isolado (~/.local/share/capix/ciber-browser), separado das suas contas pessoais.
+# Passe --proxy para redirecionar o tráfego para Burp Suite / OWASP ZAP em 127.0.0.1:8080.
+set -euo pipefail
+PROF="$HOME/.local/share/capix/ciber-browser"
+mkdir -p "$PROF"
+
+ARGS=(
+  --user-data-dir="$PROF"
+  --no-first-run
+  --no-default-browser-check
+  --disable-sync
+  --class=CapixCiberBrowser
+)
+
+if [ "${1:-}" = "--proxy" ]; then
+  shift
+  ARGS+=(--proxy-server="http://127.0.0.1:8080" --ignore-certificate-errors)
+fi
+
+BROWSER="$(command -v chromium-browser || command -v chromium)"
+exec "$BROWSER" "${ARGS[@]}" "$@"

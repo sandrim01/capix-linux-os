@@ -24,6 +24,10 @@
     if (action === 'kiosk-disable') S.kiosk = { enabled: false, url: '' };
     if (action === 'av-scan') { S.antivirus.last = new Date().toLocaleString('pt-BR'); }
     if (action === 'wallpaper') { S.wallpapers.current = args[0]; try { parent.postMessage({ capixWallpaper: args[0] }, '*'); } catch (e) {} }
+    if (action === 'ciber-init' && S.ciber) S.ciber.workspace_exists = true;
+    if (action === 'ciber-lab-start' && S.ciber) { const l = S.ciber.labs.find(x => x.id === args[0]); if (l) l.running = true; }
+    if (action === 'ciber-lab-stop' && S.ciber) { const l = S.ciber.labs.find(x => x.id === args[0]); if (l) l.running = false; }
+    if (action === 'ciber-lab-stop-all' && S.ciber) { S.ciber.labs.forEach(x => { x.running = false; }); }
     if (action === 'welcome-done') S.welcome_done = true;
     return log;
   }

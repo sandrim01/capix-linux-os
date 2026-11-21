@@ -157,7 +157,7 @@ const icon = (k, cls='') => `<svg class="${cls}" viewBox="0 0 24 24" fill="none"
 
 const PAGES = [
   ['inicio','Início','home'],['atualizacoes','Atualizações e restauração','upd'],['android','Apps Android','android'],
-  ['apps','Apps recomendados','apps'],['jogos','Modo gamer','game'],['ia','Assistente de IA','ai'],['seguranca','Segurança','shield'],['pentest','Pentest & OSINT','shield'],
+  ['apps','Apps recomendados','apps'],['jogos','Modo gamer','game'],['pentest','Lab Ciber','shield'],['ia','Assistente de IA','ai'],['seguranca','Segurança','shield'],
   ['backup','Backup','save'],['privacidade','Privacidade','lock'],['perfis','Perfis de trabalho','profile'],['impressoras','Impressoras e scanners','printer'],
   ['papeis','Papéis de parede','wall'],['video','Placa de vídeo','screen'],['aparencia','Aparência','paint'],['quiosque','Modo quiosque','kiosk'],['sobre','Sobre','info'],
 ];
@@ -213,6 +213,7 @@ const VIEWS = {
          ['android','android','Apps Android', S.android.initialized ? 'Ativados' : 'Toque para ativar'],
          ['apps','apps','Apps recomendados', `${S.apps.filter(a=>a.installed).length} instalados`],
          ['jogos','game','Modo gamer', S.gamer.on ? 'Ligado — bom jogo!' : 'Plataformas de jogos e desempenho'],
+         ['pentest','shield','Lab Ciber', (S.ciber && S.ciber.session_ciber) ? 'Sessão Capix Ciber ativa' : 'Kali, VMs (KVM), laboratórios e OSINT'],
          ['ia','ai','Assistente de IA','IA local e privada'],
          ['seguranca','shield','Segurança', S.antivirus.infected ? 'Atenção: ameaças encontradas' : 'Nenhuma ameaça'],
          ['backup','save','Backup', S.backup && S.backup.configurado ? (S.backup.ultimo ? 'Último: ' + S.backup.ultimo : 'Configurado') : 'Proteja seus arquivos'],
@@ -356,27 +357,63 @@ const VIEWS = {
   },
 
   pentest: () => {
+    const c = S.ciber || {};
+    const labs = c.labs || [];
+    const anyRunning = labs.some(l => l.running);
     const tools = [
       ['nmap','Nmap','Varredura de portas e serviços'],
-      ['tshark','TShark / Wireshark','Captura e análise de pacotes'],
+      ['wireshark / tshark','Wireshark & TShark','Captura e análise de pacotes'],
       ['tcpdump','tcpdump','Sniffer de rede via terminal'],
       ['sqlmap','sqlmap','Testes de injeção SQL'],
       ['nikto','Nikto','Scanner de vulnerabilidades web'],
-      ['john / hashcat','John / Hashcat','Quebra de hashes'],
-      ['hydra','Hydra','Força bruta de autenticação'],
+      ['john / hashcat','John / Hashcat','Quebra e auditoria de hashes'],
+      ['hydra','Hydra','Testes de autenticação'],
       ['aircrack-ng','Aircrack-ng','Auditoria de redes Wi-Fi'],
-      ['radare2','radare2','Engenharia reversa'],
-      ['exiftool','ExifTool','Metadados de arquivos'],
+      ['radare2 / binwalk','radare2 & Binwalk','Engenharia reversa e firmware'],
+      ['yara / exiftool','YARA & ExifTool','Análise estática e metadados'],
     ];
-    return `<h1>Pentest &amp; OSINT</h1>
-    <p class="muted">Edição de segurança do Capix. As ferramentas abaixo já vêm instaladas e disponíveis no terminal.</p>
-    ${featOn('faro') ? card('shield','Capix Faro','Investigação passiva de domínios, IPs, links, arquivos, hashes e e-mails, com registro em casos.', btn('Abrir Faro','open:faro','pri')) : ''}
-    <h2>Ferramentas instaladas</h2>
+    return `<h1>Lab Ciber — Cibersegurança</h1>
+    <div class="hero" style="${c.session_ciber ? 'background:linear-gradient(120deg,#1f3a2e,#242427 70%)' : ''}">
+      <div style="width:84px;height:84px;display:grid;place-items:center">${icon('shield')}</div>
+      <div style="flex:1">
+        <h1 style="font-size:24px">${c.session_ciber ? 'Sessão Capix Ciber ativa' : '3º modo de login: Capix Ciber'}</h1>
+        <span class="muted">${c.session_ciber
+          ? 'Ambiente de estudos carregado com pasta ~/CiberLab pronta, Kali sob demanda, VMs e laboratórios isolados.'
+          : 'Na tela de login (botão de sessão no canto inferior direito), escolha <b>Capix Ciber (lab de cibersegurança)</b> para entrar direto no ambiente de aulas.'}</span>
+      </div>
+    </div>
+
+    <h2>Estação de estudos</h2>
+    ${card('shield','Terminal Kali Linux (Distrobox)', c.kali_created
+      ? 'Contêiner Kali pronto. Instale ferramentas mutáveis das aulas (SecLists, Metasploit, Burp, ffuf, impacket) com <code>sudo apt install</code> sem alterar o sistema base.'
+      : 'Na primeira vez cria automaticamente um contêiner Kali Rolling isolado (sem mexer no sistema imutável).',
+      btn('Abrir Kali','open:kali','pri'))}
+    ${card('screen','Máquinas Virtuais (QEMU/KVM + Virt-Manager)',
+      `Aceleração KVM: ${c.kvm ? '<span class="pill ok">ativa (/dev/kvm)</span>' : '<span class="pill warn">não detectada (verifique VT-x/AMD-V na BIOS)</span>'} · Use VMs isoladas (sem rede compartilhada) para laboratórios de rede, Active Directory ou análise de amostras suspeitas.`,
+      c.virt_manager ? btn('Abrir VMs','open:virt-manager','pri') : '<span class="pill warn">Ausente</span>')}
+    ${card('wifi','Wireshark (análise de tráfego)', 'Interface gráfica completa para inspecionar pacotes e arquivos PCAP das aulas.',
+      c.wireshark ? btn('Abrir Wireshark','open:wireshark') : '<span class="pill warn">Ausente</span>')}
+    ${featOn('faro') ? card('shield','Capix Faro (OSINT)', 'Investigação passiva de domínios, IPs, links, arquivos, hashes e e-mails, com casos em Markdown.', btn('Abrir Faro','open:faro')) : ''}
+    ${card('lock','Navegador de testes web', 'Perfil isolado das suas contas pessoais. Use o modo Proxy para interceptar requisições no Burp Suite ou OWASP ZAP (<code>127.0.0.1:8080</code>).',
+      `<div class="row">${btn('Abrir isolado','open:ciber-browser')}${btn('Com Proxy (8080)','open:ciber-proxy','pri')}</div>`)}
+    ${card('save','Pasta de estudos (~/CiberLab)', 'Subpastas prontas: <code>aulas</code>, <code>relatorios</code> (com modelo Markdown), <code>pcaps</code>, <code>wordlists</code> e <code>vms</code>.',
+      c.workspace_exists ? btn('Abrir pasta','open:ciber-dir') : btn('Criar pasta','ciber-init','pri'))}
+
+    <h2>Laboratórios locais isolados (127.0.0.1)</h2>
+    <p class="muted" style="margin-bottom:10px">Alvos educacionais legais via Podman rootless, acessíveis <b>somente nesta máquina</b> (nunca expostos na sua rede Wi-Fi/cabo).</p>
+    ${labs.map(l => card('bolt',
+      `${esc(l.name)} ${l.running ? '<span class="pill ok">rodando</span>' : '<span class="pill">parado</span>'}`,
+      `${esc(l.desc)} · <code>${esc(l.url)}</code>`,
+      l.running
+        ? `<div class="row">${btn('Abrir','ciber-lab-open:'+l.id,'pri')}${btn('Parar','ciber-lab-stop:'+l.id,'dng')}</div>`
+        : btn('Iniciar','ciber-lab-start:'+l.id,'pri', !c.podman)
+    )).join('')}
+    ${anyRunning ? `<div class="row" style="margin:8px 0 14px">${btn('Parar todos os laboratórios','ciber-lab-stop-all','dng')}</div>` : ''}
+
+    <h2>Ferramentas nativas no terminal</h2>
     <div class="grid">
       ${tools.map(([cmd,name,desc]) => `<div class="tile" style="cursor:default;text-align:left"><b>${esc(name)}</b><span>${esc(desc)}</span><span class="muted" style="font-size:11px;margin-top:4px">${esc(cmd)}</span></div>`).join('')}
-    </div>
-    <h2>Ambiente Kali (opcional)</h2>
-    <p class="muted">Para ferramentas que não vêm na imagem, rode um Kali isolado em contêiner:<br><code>distrobox create -i docker.io/kalilinux/kali-rolling -n kali</code><br><code>distrobox enter kali</code></p>`;
+    </div>`;
   },
   perfis: () => {
     const p = S.profiles || {}, vpns = (S.privacy && S.privacy.vpns) || [], on = p.ativo === 'investigacao';
@@ -498,6 +535,11 @@ document.addEventListener('click', async e => {
   }
   if (kind === 'backup-run') return run('backup-run', [], 'Fazendo backup da sua pasta pessoal');
   if (kind === 'backup-pick-dest' || kind === 'vpn-import' || kind === 'shred-file') return run(kind, [], '', true);
+  if (kind === 'ciber-init') return run('ciber-init', [], '', true);
+  if (kind === 'ciber-lab-start') return run('ciber-lab-start', [verb], 'Iniciando laboratório local');
+  if (kind === 'ciber-lab-stop') return run('ciber-lab-stop', [verb], 'Parando laboratório local');
+  if (kind === 'ciber-lab-stop-all') return run('ciber-lab-stop-all', [], 'Parando todos os laboratórios');
+  if (kind === 'ciber-lab-open') return run('ciber-lab-open', [verb], '', true);
   if (kind === 'vpn-up' || kind === 'vpn-down') return run(kind, [verb], (kind === 'vpn-up' ? 'Conectando à VPN' : 'Desconectando da VPN'));
   if (kind === 'kiosk-enable') {
     const url = $('#kurl').value.trim();

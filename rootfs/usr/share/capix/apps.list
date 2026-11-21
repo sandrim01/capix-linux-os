@@ -24,3 +24,6 @@ org.keepassxc.KeePassXC | KeePassXC | Cofre de senhas que fica só no seu comput
 com.bitwarden.desktop | Bitwarden | Cofre de senhas com sincronização | Privacidade | 0
 org.torproject.torbrowser-launcher | Tor Browser | Navegação anônima pela rede Tor | Privacidade | 0
 org.gnome.World.Secrets | Secrets | Cofre de senhas simples (formato KeePass) | Privacidade | 0
+# --- Estudos de Cibersegurança (página Lab Ciber) ---
+md.obsidian.Obsidian | Obsidian | Caderno em Markdown para anotações de aulas e relatórios de pentest | Cibersegurança | 0
+com.vscodium.codium | VSCodium | Editor de código aberto para scripts Python, Bash e análises | Cibersegurança | 0

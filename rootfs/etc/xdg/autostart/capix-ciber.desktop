@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Capix Ciber (Lab de Cibersegurança)
+Exec=/usr/libexec/capix/ciber-autostart
+Icon=capix-start
+OnlyShowIn=KDE;
+X-KDE-autostart-phase=2
+NoDisplay=true

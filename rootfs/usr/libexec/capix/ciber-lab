@@ -1,0 +1,176 @@
+#!/usr/bin/env python3
+"""
+Capix Ciber Lab — gerenciador de laboratórios educacionais isolados (Podman rootless, só 127.0.0.1).
+Nunca expõe portas na rede local; tudo roda vinculado estritamente a 127.0.0.1.
+
+  ciber-lab status         imprime JSON do ambiente e dos laboratórios
+  ciber-lab start <id>     baixa (se precisar) e inicia um lab da lista fechada
+  ciber-lab stop <id>      para e remove o contêiner do lab
+  ciber-lab stop-all       para todos os laboratórios em execução
+"""
+import json, os, shutil, subprocess, sys
+
+HOME = os.path.expanduser("~")
+WORKSPACE = os.path.join(HOME, "CiberLab")
+CIBER_FLAG = os.path.join(HOME, ".config/capix/ciber-on")
+DRY = os.environ.get("CAPIX_DRYRUN") == "1"
+
+LABS = [
+    {
+        "id": "juiceshop",
+        "name": "OWASP Juice Shop",
+        "desc": "Aplicação web moderna intencionalmente vulnerável (OWASP Top 10, APIs, XSS, SQLi)",
+        "image": "docker.io/bkimminich/juice-shop:latest",
+        "host_port": 3000,
+        "cont_port": 3000,
+        "url": "http://127.0.0.1:3000",
+    },
+    {
+        "id": "dvwa",
+        "name": "DVWA (Damn Vulnerable Web App)",
+        "desc": "Laboratório clássico em PHP/MySQL com níveis ajustáveis (Low/Medium/High)",
+        "image": "docker.io/vulnerables/web-dvwa:latest",
+        "host_port": 8081,
+        "cont_port": 80,
+        "url": "http://127.0.0.1:8081",
+    },
+    {
+        "id": "webgoat",
+        "name": "OWASP WebGoat",
+        "desc": "Lições guiadas passo a passo de AppSec e segurança web",
+        "image": "docker.io/webgoat/webgoat:latest",
+        "host_port": 8082,
+        "cont_port": 8080,
+        "url": "http://127.0.0.1:8082/WebGoat",
+    },
+    {
+        "id": "cyberchef",
+        "name": "CyberChef (offline)",
+        "desc": "Canivete suíço para encoding, criptografia, hashes, regex e análise de payloads",
+        "image": "ghcr.io/gchq/cyberchef:latest",
+        "host_port": 8083,
+        "cont_port": 80,
+        "url": "http://127.0.0.1:8083",
+    },
+]
+LAB_MAP = {x["id"]: x for x in LABS}
+
+
+def sh(*cmd, timeout=8):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout).stdout.strip()
+    except Exception:
+        return ""
+
+
+def running_containers():
+    if DRY or not shutil.which("podman"):
+        return set()
+    out = sh("podman", "ps", "--format", "{{.Names}}")
+    return set(l.strip() for l in out.splitlines() if l.strip())
+
+
+def kali_exists():
+    if DRY or not shutil.which("distrobox"):
+        return False
+    out = sh("distrobox", "list", "--no-color", timeout=8)
+    for line in out.splitlines():
+        cols = [c.strip() for c in line.split("|")]
+        if len(cols) >= 2 and cols[1] == "kali":
+            return True
+    return False
+
+
+def status():
+    running = running_containers()
+    return {
+        "session_ciber": os.environ.get("CAPIX_SESSION") == "ciber" or os.path.exists(CIBER_FLAG),
+        "ciber_session_installed": os.path.exists("/usr/share/wayland-sessions/capix-ciber.desktop"),
+        "workspace": WORKSPACE,
+        "workspace_exists": os.path.isdir(WORKSPACE),
+        "kali_created": kali_exists(),
+        "kvm": os.path.exists("/dev/kvm"),
+        "virt_manager": shutil.which("virt-manager") is not None,
+        "wireshark": shutil.which("wireshark") is not None,
+        "podman": shutil.which("podman") is not None,
+        "labs": [
+            {
+                "id": l["id"],
+                "name": l["name"],
+                "desc": l["desc"],
+                "url": l["url"],
+                "running": f"capix-lab-{l['id']}" in running,
+            }
+            for l in LABS
+        ],
+    }
+
+
+def start_lab(lab_id):
+    lab = LAB_MAP.get(lab_id)
+    if not lab:
+        print(f"erro: laboratório desconhecido: {lab_id}", file=sys.stderr)
+        sys.exit(2)
+    if not shutil.which("podman"):
+        print("erro: podman não está disponível nesta imagem", file=sys.stderr)
+        sys.exit(2)
+    cname = f"capix-lab-{lab['id']}"
+    print(f"==> Preparando {lab['name']} ({lab['url']})…", flush=True)
+    if DRY:
+        print(f"(simulação) podman run -d --rm --name {cname} -p 127.0.0.1:{lab['host_port']}:{lab['cont_port']} {lab['image']}")
+        return
+    subprocess.run(["podman", "rm", "-f", cname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    cmd = [
+        "podman", "run", "-d", "--rm",
+        "--name", cname,
+        "-p", f"127.0.0.1:{lab['host_port']}:{lab['cont_port']}",
+        lab["image"],
+    ]
+    print("$ " + " ".join(cmd), flush=True)
+    r = subprocess.run(cmd)
+    if r.returncode != 0:
+        sys.exit(r.returncode)
+    print(f"Pronto! Acesse em {lab['url']} (somente nesta máquina — 127.0.0.1).", flush=True)
+
+
+def stop_lab(lab_id):
+    lab = LAB_MAP.get(lab_id)
+    if not lab:
+        print(f"erro: laboratório desconhecido: {lab_id}", file=sys.stderr)
+        sys.exit(2)
+    cname = f"capix-lab-{lab['id']}"
+    print(f"==> Parando {lab['name']}…", flush=True)
+    if DRY:
+        print(f"(simulação) podman rm -f {cname}")
+        return
+    subprocess.run(["podman", "rm", "-f", cname])
+    print("Parado.", flush=True)
+
+
+def stop_all():
+    for lab in LABS:
+        cname = f"capix-lab-{lab['id']}"
+        if DRY:
+            print(f"(simulação) podman rm -f {cname}")
+        else:
+            subprocess.run(["podman", "rm", "-f", cname], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print("Todos os laboratórios locais foram parados.", flush=True)
+
+
+def main(argv):
+    cmd = argv[0] if argv else "status"
+    if cmd == "status":
+        print(json.dumps(status(), ensure_ascii=False))
+    elif cmd == "start" and len(argv) == 2:
+        start_lab(argv[1])
+    elif cmd == "stop" and len(argv) == 2:
+        stop_lab(argv[1])
+    elif cmd == "stop-all":
+        stop_all()
+    else:
+        print("uso: ciber-lab status | start <id> | stop <id> | stop-all", file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
